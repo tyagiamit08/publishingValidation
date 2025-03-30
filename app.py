@@ -143,9 +143,19 @@ with col1:
             
             # Execute the workflow and track progress
             results = {}
+
             
+
             async def run_workflow():
                 # Run the workflow asynchronously
+
+                progress_bar = st.progress(0)  # Initialize a progress bar
+                total_steps = 7  # Total number of steps in the workflow
+                current_step_index = 1
+
+                loader_placeholder = st.empty()  # This will hold the loader message
+                loader_placeholder.text("Processing... Please wait.")
+
                 async for event in graph_app.astream(initial_state):
                     # logging.info(f"Event received: {event}")
 
@@ -164,12 +174,21 @@ with col1:
                     if event_name in step_mapping:
                         st.session_state.current_step = step_mapping[event_name]
                         # initial_state.current_state = event_name  # Update the current_state field in the state
+                        # Update the progress bar
+                        current_step_index += 1
+                        progress_bar.progress(int((current_step_index / total_steps) * 100))
+
+                        loader_placeholder.info(f"Completed {st.session_state.current_step}...")
+
+                    time.sleep(2)
 
                     # Display the event details and current step on the UI
                     # with col1:
                     #     st.write(f"### Event : {step_mapping[event_name]}")
                     #     st.json(event)
                     
+                     # Simulate a loader for better UI experience
+                   
                     if event_name == "email_sender":
                         print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
                         final_state = event["email_sender"]
@@ -182,6 +201,9 @@ with col1:
                             "email_sent": final_state["email_sent"]
                         }
                         st.session_state.processing_complete = True
+
+                        progress_bar.progress(100)
+                        loader_placeholder.empty()
 
             asyncio.run(run_workflow())
             
