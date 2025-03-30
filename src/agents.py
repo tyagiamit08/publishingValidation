@@ -55,7 +55,7 @@ Guidelines for Extraction:
 Format the extracted information clearly and concisely for downstream processing."""
 
 DOC_SUMMARIZATION_INSTRUCTION="""You are a summarization expert. 
-Analyze the provided document and generate a detailed yet concise summary that captures all key points, 
+You need to analyze and then generate a detailed yet concise summary that captures all key points from the provided document, 
 main ideas, and critical details. Structure the summary for clarity and readability, 
 highlighting important sections such as conclusions, recommendations, or action items. 
 Include relevant metadata (e.g., title, author, date) if available. 

@@ -21,7 +21,6 @@ from agents import (
 import logging
 from src.models import ClientIdentificationResult, EmailDetail
 from src.utils import verify_client, print_client_identification
-from src.email_handler import EmailHandler
 
 
 
@@ -230,62 +229,62 @@ async def main():
             print("----------------------------------Extracted Information:----------------------------------\n\n\n\n")
             print(doc_processing_result.final_output)
 
-            clients_result = await Runner.run(
-                clients_identification_agent,doc_processing_result.final_output)
+            # clients_result = await Runner.run(
+            #     clients_identification_agent,doc_processing_result.final_output)
 
-            print("----------------------------------Clients Information:----------------------------------\n\n\n\n")
-            print(print_client_identification(clients_result.final_output))
+            # print("----------------------------------Clients Information:----------------------------------\n\n\n\n")
+            # print(print_client_identification(clients_result.final_output))
 
-            verified_clients = []
-            for client in clients_result.final_output.clients:
-                is_verified = verify_client(client.name)
-                if(is_verified):
-                 verified_clients.append(client.name)
+            # verified_clients = []
+            # for client in clients_result.final_output.clients:
+            #     is_verified = verify_client(client.name)
+            #     if(is_verified):
+            #      verified_clients.append(client.name)
             
-            print(f"\n\n----------------------------------Verified Clients:----------------------------------\n\n {verified_clients}")
+            # print(f"\n\n----------------------------------Verified Clients:----------------------------------\n\n {verified_clients}")
 
 
-            summarization_result = await Runner.run(
-                summarization_agent,doc_processing_result.final_output)
+            # summarization_result = await Runner.run(
+            #     summarization_agent,doc_processing_result.final_output)
             
-            print("----------------------------------Summarization:----------------------------------\n\n")
-            print(summarization_result.final_output)
+            # print("----------------------------------Summarization:----------------------------------\n\n")
+            # print(summarization_result.final_output)
             
-            emailDetail_result = await Runner.run(
-                draft_email_agent,summarization_result.final_output)
+            # emailDetail_result = await Runner.run(
+            #     draft_email_agent,summarization_result.final_output)
             
-            print("----------------------------------Draft Email Details:----------------------------------\n\n")
-            print(emailDetail_result.final_output.subject)
-            print(emailDetail_result.final_output.body)
+            # print("----------------------------------Draft Email Details:----------------------------------\n\n")
+            # print(emailDetail_result.final_output.subject)
+            # print(emailDetail_result.final_output.body)
 
-            email_input={
-                "recipient_email": "tyagiamit08@gmail.com",
-                "recipient_name": "Amit Tyagi",
-                "subject": emailDetail_result.final_output.subject,
-                "body":  emailDetail_result.final_output.body,
-                "summary": summarization_result.final_output,
-                "email_from_alias" : "AI Agent"
-            } 
+            # email_input={
+            #     "recipient_email": "tyagiamit08@gmail.com",
+            #     "recipient_name": "Amit Tyagi",
+            #     "subject": emailDetail_result.final_output.subject,
+            #     "body":  emailDetail_result.final_output.body,
+            #     "summary": summarization_result.final_output,
+            #     "email_from_alias" : "AI Agent"
+            # } 
 
-            email_result = await Runner.run(
-                send_email_agent,
-                [
-                    {
-                        "role": "user",
-                        "content": f"""
-                        Please send an email to {email_input['recipient_name']} with email {email_input['recipient_email']} with email from alias '{email_input['email_from_alias']}'
-                        with the subject '{email_input['subject']}', the following body text, 
-                        and an attached summary file.
+            # email_result = await Runner.run(
+            #     send_email_agent,
+            #     [
+            #         {
+            #             "role": "user",
+            #             "content": f"""
+            #             Please send an email to {email_input['recipient_name']} with email {email_input['recipient_email']} with email from alias '{email_input['email_from_alias']}'
+            #             with the subject '{email_input['subject']}', the following body text, 
+            #             and an attached summary file.
 
-                        Body:
-                        {email_input['body']}
+            #             Body:
+            #             {email_input['body']}
 
-                        Summary (to be attached as 'summary.txt'):
-                        {email_input['summary']}
-                        """,
-                    }
-                ]
-            )
+            #             Summary (to be attached as 'summary.txt'):
+            #             {email_input['summary']}
+            #             """,
+            #         }
+            #     ]
+            # )
         except Exception as e:
             logging.error("An error occurred during agent execution", exc_info=True)
 

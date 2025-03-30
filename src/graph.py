@@ -2,7 +2,7 @@ import os
 import logging
 import asyncio
 from langgraph.graph import StateGraph, START, END
-from src.models import State, ClientIdentificationResult, EmailDetail
+from src.models import State, ClientIdentificationResult, EmailDetail,ClientInfo
 from src.agents import (
     doc_processing_agent,
     clients_identification_agent,
@@ -22,15 +22,31 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # os.makedirs("images", exist_ok=True)
 
 # # Define the workflow nodes
-async def document_processor(state: State) -> State:
+async def document_processor(state: State,document_path:str) -> State:
     """Process the document and extract its content."""
     try:
-        logging.info(f"Processing document: {state.document_path}")
+        logging.info(f"Processing document: {document_path}")
         result = await Runner.run(
             doc_processing_agent,
-            [{"role": "user", "content": state.document_path}],
+            [{"role": "user", "content": document_path}],
         )
-        return State(**{**state.model_dump(), "document_content": result.final_output})
+
+        document_content = result.final_output 
+        new_state = state.model_dump()  # Convert to dict
+        new_state["document_content"] = document_content
+        
+        # return State(
+        #     document_content=result.final_output,
+        #     **{key: getattr(state, key) for key in state.__fields__ if key not in ["document_content"]}
+        # )
+        # return State(
+        #     document_content=document_content
+        # )
+        print (f"\n\n\n\n ***********************State in Doc Processor ***********************: {state} \n\n\n\n")
+
+        return {"document_content": document_content}
+        # return State(**new_state)  
+        # return State(**{**state.model_dump(), "document_content": result.final_output})
     except Exception as e:
         logging.error(f"Error in document processing: {str(e)}", exc_info=True)
         return State(**{**state.model_dump(), "document_content": f"Error: {str(e)}"})
@@ -39,11 +55,23 @@ async def client_identifier(state: State) -> State:
     """Identify clients in the document content."""
     try:
         logging.info("Identifying clients in document")
+
         result = await Runner.run(
             clients_identification_agent,
             state.document_content
         )
-        return State(**{**state.model_dump(), "clients": result.final_output})
+        # Convert result.final_output to a list of strings (extracting the 'name' attribute)
+        client_names = [client.name for client in result.final_output.clients]
+        
+         # Return a new State with only the updated 'clients' field
+        # return State(
+        #     clients=client_names,
+        # )
+
+        print (f"\n\n\n\n ***********************State in Client Identifier ***********************: {state} \n\n\n\n")
+
+        return {"clients": client_names}
+        # return State(**{**state.model_dump(), "clients": client_names})
     except Exception as e:
         logging.error(f"Error in client identification: {str(e)}", exc_info=True)
         return state
@@ -55,11 +83,22 @@ def client_verifier(state: State) -> State:
         return state
     
     verified_clients = []
-    for client in state.clients.clients:
-        if verify_client(client.name):
-            verified_clients.append(client.name)
+    for client in state.clients:
+        if verify_client(client):
+            verified_clients.append(client)
     
-    return State(**{**state.model_dump(), "verified_clients": verified_clients})
+    # return State(
+    #         verified_clients=verified_clients
+    # )
+    
+    print (f"\n\n\n\n ***********************State in Client Verifier ***********************: {state} \n\n\n\n")
+
+    return {"verified_clients": verified_clients}
+    # return State(
+    #         verified_clients=verified_clients,
+    #         **{key: getattr(state, key) for key in state.__fields__ if key not in ["verified_clients"]}
+    #     )
+    # return State(**{**state.model_dump(), "verified_clients": verified_clients})
 
 async def document_summarizer(state: State) -> State:
     """Summarize the document content."""
@@ -69,7 +108,23 @@ async def document_summarizer(state: State) -> State:
             summarization_agent,
             state.document_content
         )
-        return State(**{**state.model_dump(), "summary": result.final_output})
+        # new_state = state.model_dump()  # Convert to dict
+        # new_state["summary"] = result.final_output  # Update only required fields
+        
+        # return State(
+        #     summary=result.final_output,
+        #     # clients=state.clients,  # Preserve other fields explicitly
+        #     # verified_clients=state.verified_clients,
+        #     # email_details=state.email_details,
+        #     # email_sent=state.email_sent,
+        #     # recipient_email=state.recipient_email,
+        #     # email_from_alias=state.email_from_alias
+        # )
+        print (f"\n\n\n\n ***********************State in Summarizer ***********************: {state} \n\n\n\n")
+
+        return {"summary": result.final_output}
+        # return State(**new_state) 
+        # return State(**{**state.model_dump(), "summary": result.final_output})
     except Exception as e:
         logging.error(f"Error in document summarization: {str(e)}", exc_info=True)
         return state
@@ -77,12 +132,25 @@ async def document_summarizer(state: State) -> State:
 async def email_drafter(state: State) -> State:
     """Draft an email based on the document summary."""
     try:
+        if not state.summary and not state.verified_clients:
+            logging.error("Document content is missing or verified clients are missing. Skipping Email Draft.")
+            return state
+        
         logging.info("Drafting email")
         result = await Runner.run(
             draft_email_agent,
             state.summary
         )
-        return State(**{**state.model_dump(), "email_details": result.final_output})
+        
+        print (f"\n\n\n\n ***********************State in Email Drafter ***********************: {state} \n\n\n\n")
+
+        return {"email_details": result.final_output}
+        # return State(
+        #     email_details=result.final_output,
+        #     **{key: getattr(state, key) for key in state.__fields__ if key not in ["email_details"]}
+        # )
+        # return State(**new_state) 
+        # return State(**{**state.model_dump(), "email_details": result.final_output})
     except Exception as e:
         logging.error(f"Error in email drafting: {str(e)}", exc_info=True)
         return state
@@ -127,30 +195,49 @@ async def email_sender(state: State) -> State:
         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
         return state
 
-def create_workflow_graph():
+def create_workflow_graph(document_path: str):
     """Create the workflow graph using LangGraph."""
     # Create a new graph
     workflow = StateGraph(State)
     
     # Add nodes
-    workflow.add_node("document_processor", document_processor)
+    # workflow.add_node("document_processor", document_processor)
+    workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path)))
     workflow.add_node("client_identifier", client_identifier)
     workflow.add_node("client_verifier", client_verifier)
     workflow.add_node("document_summarizer", document_summarizer)
-    # workflow.add_node("email_drafter", email_drafter)
+    workflow.add_node("email_drafter", email_drafter)
     # workflow.add_node("email_sender", email_sender)
 
-    workflow.add_edge(START,"document_processor")
-    workflow.add_edge("document_processor", "client_identifier")
-    workflow.add_edge("client_identifier", "client_verifier")
-    workflow.add_edge("document_processor", "document_summarizer")
+    # workflow.add_edge(START,"document_processor")
+    # workflow.add_edge("document_processor", "client_identifier")
+    # workflow.add_edge("client_identifier", "client_verifier")
+    # workflow.add_edge("client_verifier", "document_summarizer")
+    # # workflow.add_edge("document_processor", "document_summarizer")
     # workflow.add_edge("document_summarizer", "email_drafter")
-    # workflow.add_edge("client_verifier", "email_sender")
-    # workflow.add_edge("email_drafter", "email_sender")
-    # workflow.add_edge("email_sender",END)
-    workflow.add_edge("client_verifier",END)
-    workflow.add_edge("document_summarizer",END)
+    # # workflow.add_edge("client_verifier", "email_sender")
+    # # workflow.add_edge("email_drafter", "email_sender")
+    # # workflow.add_edge("email_sender",END)
+    # # workflow.add_edge("client_verifier",END)
+    # workflow.add_edge("email_drafter",END)
+
+    # workflow.add_edge("document_processor", "client_identifier")
+    # workflow.add_edge("document_processor", "document_summarizer")  # Ensure summarizer gets document content
+    # workflow.add_edge("client_identifier", "client_verifier")
+    # workflow.add_edge("client_verifier", "email_drafter")
+    # workflow.add_edge("document_summarizer", "email_drafter")
+    # workflow.add_edge("email_drafter", END)
     
+    # Define edges
+    workflow.add_edge(START, "document_processor")
+    workflow.add_edge("document_processor", "client_identifier")
+    workflow.add_edge("document_processor", "document_summarizer")
+    workflow.add_edge("client_identifier", "client_verifier")
+    workflow.add_edge("document_summarizer", "email_drafter")
+    # workflow.add_edge("document_summarizer", "email_drafter")
+    workflow.add_edge("client_verifier", END)
+    workflow.add_edge("email_drafter", END)
+
     # Set the entry point
     workflow.set_entry_point("document_processor")
     
@@ -159,8 +246,9 @@ def create_workflow_graph():
 def visualize_graph():
     """Generate and save a visualization of the workflow graph."""
     try:
+        placeholder_path= "AI.docx"
         # Create the workflow graph
-        workflow = create_workflow_graph()
+        workflow = create_workflow_graph(document_path=placeholder_path)
 
         # Compile the workflow and generate the graph
         graph = workflow.compile().get_graph(xray=True)
