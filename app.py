@@ -47,8 +47,8 @@ with st.sidebar:
     print(f"Uploaded file ---->: {uploaded_file}")
 
     st.header("Email Configuration")
-    recipient_email = st.text_input("Recipient Email", "example@example.com")
-    email_from_alias = st.text_input("Email From Alias", "AI Agent")
+    recipient_email = st.text_input("Recipient Email", "tyagiamit08@gmail.com")
+    email_from_alias = st.text_input("Email From Alias", "AI Agent 30Mar")
     
     #Generate workflow graph
     if st.button("Show Workflow Graph"):
@@ -66,30 +66,30 @@ col1, col2 = st.columns([3, 1])
 
 # Progress indicators in the right column
 with col2:
-    # st.header("Workflow Progress")
+    st.header("Workflow Progress")
     
-    # steps = [
-    #     "Document Upload",
-    #     "Document Processing",
-    #     "Client Identification",
-    #     "Client Verification",
-    #     "Document Summarization",
-    #     "Email Drafting",
-    #     "Email Sending"
-    # ]
+    steps = [
+        "Document Upload",
+        "Document Processing",
+        "Client Identification",
+        "Client Verification",
+        "Document Summarization",
+        "Email Drafting",
+        "Email Sending"
+    ]
     
-    # # Display progress
-    # for i, step in enumerate(steps):
-    #     if st.session_state.current_step is None:
-    #         status = "⚪" if i > 0 else "🔵" if uploaded_file else "⚪"
-    #     elif i < steps.index(st.session_state.current_step):
-    #         status = "✅"
-    #     elif i == steps.index(st.session_state.current_step):
-    #         status = "🔵"
-    #     else:
-    #         status = "⚪"
+    # Display progress
+    for i, step in enumerate(steps):
+        if st.session_state.current_step is None:
+            status = "⚪" if i > 0 else "🔵" if uploaded_file else "⚪"
+        elif i < steps.index(st.session_state.current_step):
+            status = "✅"
+        elif i == steps.index(st.session_state.current_step):
+            status = "🔵"
+        else:
+            status = "⚪"
         
-    #     st.write(f"{status} {step}")
+        st.write(f"{status} {step}")
     
     # Display graph visualization if available
     if st.session_state.graph_image:
@@ -181,17 +181,18 @@ with col1:
                         st.write(f"### Event : {step_mapping[event_name]}")
                         st.json(event)
                     
-                    # if event["type"] == "end":
-                    #     final_state = event["state"]
-                    #     st.session_state.results = {
-                    #         "document_content": final_state.document_content[:1000] + "..." if len(final_state.document_content) > 1000 else final_state.document_content,
-                    #         "clients": final_state.clients,
-                    #         "verified_clients": final_state.verified_clients,
-                    #         "summary": final_state.summary,
-                    #         "email_details": final_state.email_details,
-                    #         "email_sent": final_state.email_sent
-                    #     }
-                    #     st.session_state.processing_complete = True
+                    if event_name == "email_sender":
+                        print(f"!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!")
+                        final_state = event["email_sender"]
+                        st.session_state.results = {
+                            "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
+                            "clients": final_state["clients"],
+                            "verified_clients": final_state["verified_clients"],
+                            "summary": final_state["summary"],
+                            "email_details": final_state["email_details"],
+                            "email_sent": final_state["email_sent"]
+                        }
+                        st.session_state.processing_complete = True
                     #     break
                 # st.rerun()
 
@@ -206,31 +207,31 @@ with col1:
                 os.unlink(temp_file_path)
     
     # # Display results if processing is complete
-    # if st.session_state.processing_complete and st.session_state.results:
-    #     results = st.session_state.results
+    if st.session_state.processing_complete and st.session_state.results:
+        results = st.session_state.results
         
-    #     with st.expander("Document Content (Preview)", expanded=False):
-    #         st.text_area("Content", results["document_content"], height=200)
+        with st.expander("Document Content (Preview)", expanded=False):
+            st.text_area("Content", results["document_content"], height=200)
         
-    #     with st.expander("Identified Clients", expanded=True):
-    #         if results["clients"]:
-    #             for i, client in enumerate(results["clients"].clients):
-    #                 st.write(f"- {client.name}")
+        with st.expander("Identified Clients", expanded=True):
+            if results["clients"]:
+                for i, client in enumerate(results["clients"]):
+                    st.write(f"- {client}")
         
-    #     with st.expander("Verified Clients", expanded=True):
-    #         for client in results["verified_clients"]:
-    #             st.write(f"- {client}")
+        with st.expander("Verified Clients", expanded=True):
+            for client in results["verified_clients"]:
+                st.write(f"- {client}")
         
-    #     with st.expander("Document Summary", expanded=True):
-    #         st.write(results["summary"])
+        with st.expander("Document Summary", expanded=True):
+            st.write(results["summary"])
         
-    #     with st.expander("Email Details", expanded=True):
-    #         if results["email_details"]:
-    #             st.subheader("Subject")
-    #             st.write(results["email_details"].subject)
-    #             st.subheader("Body")
-    #             st.write(results["email_details"].body)
+        with st.expander("Email Details", expanded=True):
+            if results["email_details"]:
+                st.subheader("Subject")
+                st.write(results["email_details"].subject)
+                st.subheader("Body")
+                st.write(results["email_details"].body)
         
-    #     if results["email_sent"]:
-    #         st.success("Email sent successfully!")
+        if results["email_sent"]:
+            st.success("Email sent successfully!")
 

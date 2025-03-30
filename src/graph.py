@@ -207,7 +207,7 @@ def create_workflow_graph(document_path: str):
     workflow.add_node("client_verifier", client_verifier)
     workflow.add_node("document_summarizer", document_summarizer)
     workflow.add_node("email_drafter", email_drafter)
-    # workflow.add_node("email_sender", email_sender)
+    workflow.add_node("email_sender", email_sender)
 
     # workflow.add_edge(START,"document_processor")
     # workflow.add_edge("document_processor", "client_identifier")
@@ -234,9 +234,9 @@ def create_workflow_graph(document_path: str):
     workflow.add_edge("document_processor", "document_summarizer")
     workflow.add_edge("client_identifier", "client_verifier")
     workflow.add_edge("document_summarizer", "email_drafter")
-    # workflow.add_edge("document_summarizer", "email_drafter")
-    workflow.add_edge("client_verifier", END)
-    workflow.add_edge("email_drafter", END)
+    workflow.add_edge("client_verifier", "email_sender")
+    workflow.add_edge("email_drafter", "email_sender")
+    workflow.add_edge("email_sender", END)
 
     # Set the entry point
     workflow.set_entry_point("document_processor")
