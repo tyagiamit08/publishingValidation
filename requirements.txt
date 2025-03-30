@@ -1,0 +1,14 @@
+langchain
+openai
+python-dotenv
+docx2txt
+python-docx
+sendgrid
+openai-agents
+ipython
+PyPDF2
+docx
+streamlit
+pydot
+networkx
+langgraph

@@ -1,0 +1,38 @@
+{
+    "clients": [
+        {
+            "name": "Nestle",
+            "dcs": {
+                "name": "John Doe",
+                "email": "",
+                "assistants": [
+                    {
+                        "name": "Jane Smith",
+                        "email": "tyagiamit08@gmail.com"
+                    },
+                    {
+                        "name": "Emily Davis",
+                        "email": "tyagiamit08@gmail.com"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "IKEA",
+            "dcs": {
+                "name": "Michael Brown",
+                "email": "",
+                "assistants": [
+                    {
+                        "name": "Chris Wilson",
+                        "email": "tyagiamit08@gmail.com"
+                    },
+                    {
+                        "name": "Patricia Johnson",
+                        "email": "tyagiamit08@gmail.com"
+                    }
+                ]
+            }
+        }
+    ]
+}
