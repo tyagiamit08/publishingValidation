@@ -43,17 +43,15 @@ if "graph_image" not in st.session_state:
 with st.sidebar:
     st.header("Document Upload")
     uploaded_file = st.file_uploader("Upload a document", type=["docx", "pdf"])
-    
-    print(f"Uploaded file ---->: {uploaded_file}")
 
     st.header("Email Configuration")
     recipient_email = st.text_input("Recipient Email", "tyagiamit08@gmail.com")
     email_from_alias = st.text_input("Email From Alias", "AI Agent 30Mar")
     
+    
     #Generate workflow graph
     if st.button("Show Workflow Graph"):
         graph_path = visualize_graph()
-        print(f"Graph saved at----->: {graph_path}")
         if os.path.exists(graph_path):
             st.session_state.graph_image = graph_path
             st.success("Workflow graph generated!")
@@ -66,42 +64,42 @@ col1, col2 = st.columns([3, 1])
 
 # Progress indicators in the right column
 with col2:
-    st.header("Workflow Progress")
+    # st.header("Workflow Progress")
     
-    steps = [
-        "Document Upload",
-        "Document Processing",
-        "Client Identification",
-        "Client Verification",
-        "Document Summarization",
-        "Email Drafting",
-        "Email Sending"
-    ]
+    # steps = [
+    #     "Document Upload",
+    #     "Document Processing",
+    #     "Client Identification",
+    #     "Client Verification",
+    #     "Document Summarization",
+    #     "Email Drafting",
+    #     "Email Sending"
+    # ]
     
-    # Display progress
-    for i, step in enumerate(steps):
-        if st.session_state.current_step is None:
-            status = "⚪" if i > 0 else "🔵" if uploaded_file else "⚪"
-        elif i < steps.index(st.session_state.current_step):
-            status = "✅"
-        elif i == steps.index(st.session_state.current_step):
-            status = "🔵"
-        else:
-            status = "⚪"
+    # # Display progress
+    # for i, step in enumerate(steps):
+    #     if st.session_state.current_step is None:
+    #         status = "⚪" if i > 0 else "🔵" if uploaded_file else "⚪"
+    #     elif i < steps.index(st.session_state.current_step):
+    #         status = "✅"
+    #     elif i == steps.index(st.session_state.current_step):
+    #         status = "🔵"
+    #     else:
+    #         status = "⚪"
         
-        st.write(f"{status} {step}")
+    #     st.write(f"{status} {step}")
     
     # Display graph visualization if available
     if st.session_state.graph_image:
         st.header("Workflow Graph")
-        st.image(st.session_state.graph_image, use_column_width=True)
+        st.image(st.session_state.graph_image, use_container_width=True)
     else:
         st.header("Workflow Graph")
         st.info("Click 'Show Workflow Graph' in the sidebar to generate the workflow visualization")
 
 # Main content area
 with col1:
-    st.header("Results")
+    # st.header("Results")
     
     # if process_button and uploaded_file:
     if process_button and uploaded_file:
@@ -149,20 +147,11 @@ with col1:
             async def run_workflow():
                 # Run the workflow asynchronously
                 async for event in graph_app.astream(initial_state):
-                    # Debugging: Log the event structure
-                    logging.info(f"Event received: {event}")
-                    # Safeguard: Check if 'node' key exists in the event
-                    # if "node" not in event:
-                    #     logging.warning("Event does not contain 'node' key. Skipping event.")
-                    #     continue
+                    # logging.info(f"Event received: {event}")
 
-                    print (f"\n\n\n\n ***********************Type of Event ***********************: {event.get("type")} \n\n\n\n")
+                    event_name = list(event.keys())[0] 
 
-                    # Extract the top-level key from the event
-                    event_name = list(event.keys())[0]  # Get the top-level key (e.g., 'client_identifier')
-
-                  
-                    # # Map the event name to a human-readable step name
+                    # Map the event name to a human-readable step name
                     step_mapping = {
                         "document_processor": "Document Processing",
                         "client_identifier": "Client Identification",
@@ -172,17 +161,17 @@ with col1:
                         "email_sender": "Email Sending"
                     }
 
-                    # if event_name in step_mapping:
-                    #     st.session_state.current_step = step_mapping[event_name]
-                    #     # initial_state.current_state = event_name  # Update the current_state field in the state
+                    if event_name in step_mapping:
+                        st.session_state.current_step = step_mapping[event_name]
+                        # initial_state.current_state = event_name  # Update the current_state field in the state
 
                     # Display the event details and current step on the UI
-                    with col1:
-                        st.write(f"### Event : {step_mapping[event_name]}")
-                        st.json(event)
+                    # with col1:
+                    #     st.write(f"### Event : {step_mapping[event_name]}")
+                    #     st.json(event)
                     
                     if event_name == "email_sender":
-                        print(f"!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!")
+                        print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
                         final_state = event["email_sender"]
                         st.session_state.results = {
                             "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
@@ -193,8 +182,6 @@ with col1:
                             "email_sent": final_state["email_sent"]
                         }
                         st.session_state.processing_complete = True
-                    #     break
-                # st.rerun()
 
             asyncio.run(run_workflow())
             
