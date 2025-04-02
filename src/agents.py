@@ -62,6 +62,19 @@ highlighting important sections such as conclusions, recommendations, or action 
 Include relevant metadata (e.g., title, author, date) if available. 
 Ensure the summary preserves the context and tone of the document while avoiding unnecessary repetition or irrelevant details."""
 
+DRAFT_EMAIL_INSTRUCTIONS="""
+        You are an expert email drafting agent. Your task is to create a professional and concise email.
+        The email should include:
+        - A clear and concise subject line based on the provided summary.
+        - A well-structured body that includes:
+            - A greeting: "Dear Recipient."
+            - A brief introduction providing context about the attachment (e.g., "Please find attached the document on the key points").
+            - A polite request for feedback or action (e.g., "Kindly review the document and share your feedback or let us know if further clarification is needed.").
+            - A closing statement: "Best Regards."
+        Ensure the tone is professional, polite, and appropriate for the recipient.
+    """
+
+
 # Define agents
 doc_processing_agent = Agent(
     name="Document Processing Agent",
@@ -87,17 +100,7 @@ summarization_agent = Agent(
 
 draft_email_agent = Agent(
     name="Email Drafting Agent",
-    instructions="""
-        You are an expert email drafting agent. Your task is to create a professional and engaging email based on the provided summary.
-        The email should include:
-        - A clear and concise subject line summarizing the purpose of the email.
-        - A well-structured body that includes:
-            - A greeting.
-            - A brief introduction or context.
-            - The key points from the summary.
-            - A closing statement with a call to action, if applicable.
-        Ensure the tone is professional and appropriate for the recipient. Don't explicitly ask to connect or meet or setup a followup discussion. The email should simply provide the summary and express willingness to discuss further if needed.
-    """,
+    instructions=DRAFT_EMAIL_INSTRUCTIONS,
     model=EMAIL_DRAFTING_MODEL,
     output_type=EmailDetail,
 )
