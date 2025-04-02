@@ -8,7 +8,8 @@ from src.agents import (
     clients_identification_agent,
     summarization_agent,
     draft_email_agent,
-    send_email_agent
+    # send_email_agent,
+    send_email_with_doc_attached_agent
 )
 
 from src.utils import verify_client
@@ -22,7 +23,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # os.makedirs("images", exist_ok=True)
 
 # # Define the workflow nodes
-async def document_processor(state: State,document_path:str) -> State:
+async def document_processor(state: State,document_path:str,file_name:str) -> State:
     """Process the document and extract its content."""
     try:
         logging.info(f"Processing document: {document_path}")
@@ -32,8 +33,10 @@ async def document_processor(state: State,document_path:str) -> State:
         )
 
         document_content = result.final_output 
-        new_state = state.model_dump()  # Convert to dict
-        new_state["document_content"] = document_content
+        # new_state = state.model_dump()  # Convert to dict
+        # new_state["document_content"] = document_content
+        # new_state["document_path"] = document_path
+        # new_state["document_name"] = file_name
         
         # return State(
         #     document_content=result.final_output,
@@ -44,7 +47,7 @@ async def document_processor(state: State,document_path:str) -> State:
         # )
         print (f"\n\n\n\n ***********************State in Doc Processor ***********************: {state} \n\n\n\n")
 
-        return {"document_content": document_content}
+        return {"document_content": document_content, "document_path": document_path,"document_name": file_name}
         # return State(**new_state)  
         # return State(**{**state.model_dump(), "document_content": result.final_output})
     except Exception as e:
@@ -155,36 +158,75 @@ async def email_drafter(state: State) -> State:
         logging.error(f"Error in email drafting: {str(e)}", exc_info=True)
         return state
 
-async def email_sender(state: State) -> State:
+# async def email_sender(state: State) -> State:
+#     """Send the email with the summary attached."""
+#     if not state.email_details:
+#         return state
+    
+#     try:
+#         logging.info(f"Sending email to {state.recipient_email}")
+#         email_input = {
+#             "recipient_email": state.recipient_email,
+#             "subject": state.email_details.subject,
+#             "body": state.email_details.body,
+#             "summary": state.summary,
+#             "email_from_alias": state.email_from_alias
+#         }
+        
+#         result = await Runner.run(
+#             send_email_agent,
+#             [
+#                 {
+#                     "role": "user",
+#                     "content": f"""
+#                     Please send an email to {state.recipient_email} with email from alias '{state.email_from_alias}'
+#                     with the subject '{email_input['subject']}', the following body text, 
+#                     and an attached summary file.
+
+#                     Body:
+#                     {email_input['body']}
+
+#                     Summary (to be attached as 'summary.txt'):
+#                     {email_input['summary']}
+#                     """,
+#                 }
+#             ]
+#         )
+        
+#         return State(**{**state.model_dump(), "email_sent": "successfully" in result.final_output.lower()})
+#     except Exception as e:
+#         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
+#         return state
+
+async def email_sender_with_doc_attached(state: State) -> State:
     """Send the email with the summary attached."""
     if not state.email_details:
         return state
     
     try:
-        logging.info(f"Sending email to {state.recipient_email}")
+        logging.info(f"---------------Sending email to {state.recipient_email} ---------------")
         email_input = {
             "recipient_email": state.recipient_email,
             "subject": state.email_details.subject,
             "body": state.email_details.body,
-            "summary": state.summary,
-            "email_from_alias": state.email_from_alias
+            # "summary": state.summary,
+            "email_from_alias": state.email_from_alias,
+            "file_path":state.document_path,
+            "file_name":state.document_name
         }
         
         result = await Runner.run(
-            send_email_agent,
+            send_email_with_doc_attached_agent,
             [
                 {
                     "role": "user",
                     "content": f"""
                     Please send an email to {state.recipient_email} with email from alias '{state.email_from_alias}'
                     with the subject '{email_input['subject']}', the following body text, 
-                    and an attached summary file.
+                    and an attached the file as per {email_input['file_path']} with the file name {email_input['file_name']} .
 
                     Body:
                     {email_input['body']}
-
-                    Summary (to be attached as 'summary.txt'):
-                    {email_input['summary']}
                     """,
                 }
             ]
@@ -194,20 +236,22 @@ async def email_sender(state: State) -> State:
     except Exception as e:
         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
         return state
-
-def create_workflow_graph(document_path: str):
+    
+def create_workflow_graph(document_path: str,file_name:str):
     """Create the workflow graph using LangGraph."""
     # Create a new graph
     workflow = StateGraph(State)
     
     # Add nodes
     # workflow.add_node("document_processor", document_processor)
-    workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path)))
+    workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
     workflow.add_node("client_identifier", client_identifier)
     workflow.add_node("client_verifier", client_verifier)
     workflow.add_node("document_summarizer", document_summarizer)
     workflow.add_node("email_drafter", email_drafter)
-    workflow.add_node("email_sender", email_sender)
+    # workflow.add_node("email_sender", email_sender)
+    workflow.add_node("email_sender", email_sender_with_doc_attached)
+    
 
     # workflow.add_edge(START,"document_processor")
     # workflow.add_edge("document_processor", "client_identifier")
@@ -246,9 +290,10 @@ def create_workflow_graph(document_path: str):
 def visualize_graph():
     """Generate and save a visualization of the workflow graph."""
     try:
-        placeholder_path= "AI.docx"
+        placeholder_path= "",
+        placeholder_file_name=""
         # Create the workflow graph
-        workflow = create_workflow_graph(document_path=placeholder_path)
+        workflow = create_workflow_graph(document_path=placeholder_path,file_name=placeholder_file_name)
 
         # Compile the workflow and generate the graph
         graph = workflow.compile().get_graph(xray=True)

@@ -147,7 +147,43 @@ def send_email(recipient_email: str, subject: str, body: str, summary: str, emai
         logging.error(f"Error sending email: {str(e)}", exc_info=True)
         return f"Error sending email: {str(e)}"
     
-        
+@function_tool
+def send_email_with_doc(recipient_email: str, subject: str, body: str, doc_temp_path: str, email_from_alias: str = None) -> str:
+    """Sends an email with the provided details and attaches the summary."""
+    try:
+        # Log the email details
+        logging.info(f"Attempting to send email to: {recipient_email}")
+        logging.info(f"Subject: {subject}")
+        logging.info(f"Body: {body}")
+        if email_from_alias:
+            logging.info(f"Email From Alias: {email_from_alias}")
+
+        # Create the email
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = f"{email_from_alias} <{os.getenv('EMAIL_SENDER')}>" if email_from_alias else os.getenv("EMAIL_SENDER")
+        msg["To"] = recipient_email
+        msg.set_content(body)
+
+        # Attach the uploaded file
+        if doc_temp_path and os.path.exists(doc_temp_path):
+            with open(doc_temp_path, "rb") as f:
+                file_data = f.read()
+                file_name = os.path.basename(doc_temp_path)
+            msg.add_attachment(file_data, maintype="application", subtype="octet-stream", filename=file_name)
+
+       
+        # Send the email using SMTP
+        with smtplib.SMTP_SSL(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT"))) as server:
+            server.login(os.getenv("EMAIL_SENDER"), os.getenv("EMAIL_PASSWORD"))
+            server.send_message(msg)
+
+        logging.info("Email sent successfully!")
+        return "Email sent successfully!"
+    except Exception as e:
+        logging.error(f"Error sending email: {str(e)}", exc_info=True)
+        return f"Error sending email: {str(e)}"
+
 #region AI Agents
 
 doc_processing_agent = Agent(
@@ -209,6 +245,23 @@ draft_email_agent = Agent(
     output_type=EmailDetail,
 )
 
+send_email_with_doc_agent = Agent(
+    name="Send Email Doc Agent",
+    instructions="""
+        You are an email-sending expert. Your task is to send an email with an attachment of the uploaded document.
+        Send a professional email to the recipient with the subject and body provided from the context.
+        The input will include:
+        - recipient_email: The email address of the recipient.
+        - subject: The subject of the email.
+        - body: The body of the email.
+        Attach the uploaded doucment to the email.
+        Ensure the email is sent successfully using the provided SMTP server details.
+    """,
+    tools=[send_email_with_doc],
+    model="gpt-4",
+    output_type=str,
+)
+
 # endregion
 
 async def main():
@@ -229,62 +282,67 @@ async def main():
             print("----------------------------------Extracted Information:----------------------------------\n\n\n\n")
             print(doc_processing_result.final_output)
 
-            # clients_result = await Runner.run(
-            #     clients_identification_agent,doc_processing_result.final_output)
+            clients_result = await Runner.run(
+                clients_identification_agent,doc_processing_result.final_output)
 
-            # print("----------------------------------Clients Information:----------------------------------\n\n\n\n")
-            # print(print_client_identification(clients_result.final_output))
+            print("----------------------------------Clients Information:----------------------------------\n\n\n\n")
+            print(print_client_identification(clients_result.final_output))
 
-            # verified_clients = []
-            # for client in clients_result.final_output.clients:
-            #     is_verified = verify_client(client.name)
-            #     if(is_verified):
-            #      verified_clients.append(client.name)
+            verified_clients = []
+            for client in clients_result.final_output.clients:
+                is_verified = verify_client(client.name)
+                if(is_verified):
+                 verified_clients.append(client.name)
             
-            # print(f"\n\n----------------------------------Verified Clients:----------------------------------\n\n {verified_clients}")
+            print(f"\n\n----------------------------------Verified Clients:----------------------------------\n\n {verified_clients}")
 
 
-            # summarization_result = await Runner.run(
-            #     summarization_agent,doc_processing_result.final_output)
+            summarization_result = await Runner.run(
+                summarization_agent,doc_processing_result.final_output)
             
-            # print("----------------------------------Summarization:----------------------------------\n\n")
-            # print(summarization_result.final_output)
+            print("----------------------------------Summarization:----------------------------------\n\n")
+            print(summarization_result.final_output)
             
-            # emailDetail_result = await Runner.run(
-            #     draft_email_agent,summarization_result.final_output)
+            emailDetail_result = await Runner.run(
+                draft_email_agent,summarization_result.final_output)
             
-            # print("----------------------------------Draft Email Details:----------------------------------\n\n")
-            # print(emailDetail_result.final_output.subject)
-            # print(emailDetail_result.final_output.body)
+            print("----------------------------------Draft Email Details:----------------------------------\n\n")
+            print(emailDetail_result.final_output.subject)
+            print(emailDetail_result.final_output.body)
 
-            # email_input={
-            #     "recipient_email": "tyagiamit08@gmail.com",
-            #     "recipient_name": "Amit Tyagi",
-            #     "subject": emailDetail_result.final_output.subject,
-            #     "body":  emailDetail_result.final_output.body,
-            #     "summary": summarization_result.final_output,
-            #     "email_from_alias" : "AI Agent"
-            # } 
+            email_input={
+                "recipient_email": "tyagiamit08@gmail.com",
+                "recipient_name": "Amit Tyagi",
+                "subject": emailDetail_result.final_output.subject,
+                "body":  emailDetail_result.final_output.body,
+                # "summary": summarization_result.final_output,
+                "email_from_alias" : "AI Agent",
+                "file_path":doc_path
+                # "attachments": [
+                #         {
+                #             # "file": open(doc_path, "rb"),
+                #             "filename": os.path.basename(doc_path),
+                #         }
+                #     ]
+            } 
 
-            # email_result = await Runner.run(
-            #     send_email_agent,
-            #     [
-            #         {
-            #             "role": "user",
-            #             "content": f"""
-            #             Please send an email to {email_input['recipient_name']} with email {email_input['recipient_email']} with email from alias '{email_input['email_from_alias']}'
-            #             with the subject '{email_input['subject']}', the following body text, 
-            #             and an attached summary file.
+            email_result = await Runner.run(
+                # send_email_agent,
+                send_email_with_doc_agent,
+                [
+                    {
+                        "role": "user",
+                        "content": f"""
+                        Please send an email to {email_input['recipient_name']} with email {email_input['recipient_email']} with email from alias '{email_input['email_from_alias']}'
+                        with the subject '{email_input['subject']}', the following body text, 
+                        and an attached the file as per {email_input['file_path']} .
 
-            #             Body:
-            #             {email_input['body']}
-
-            #             Summary (to be attached as 'summary.txt'):
-            #             {email_input['summary']}
-            #             """,
-            #         }
-            #     ]
-            # )
+                        Body:
+                        {email_input['body']}
+                        """,
+                    }
+                ]
+            )
         except Exception as e:
             logging.error("An error occurred during agent execution", exc_info=True)
 

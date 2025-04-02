@@ -15,6 +15,8 @@ class EmailDetail(BaseModel):
 class State(BaseModel):
     # document_path: str
     document_content: Annotated[str, "multi"] = ""
+    document_path: str = ""
+    document_name: str = ""
     clients: List[str]=[]
     verified_clients: List[str] = []
     summary: str = ""

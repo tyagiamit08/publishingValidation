@@ -20,7 +20,8 @@ from email.message import EmailMessage
 import logging
 from dotenv import load_dotenv
 from src.models import ClientIdentificationResult,EmailDetail
-from src.tools import send_email, extract_document_content
+# from src.tools import send_email, 
+from src.tools import extract_document_content,send_email_with_doc_attached
 
 # Load environment variables
 load_dotenv()
@@ -101,20 +102,38 @@ draft_email_agent = Agent(
     output_type=EmailDetail,
 )
 
-send_email_agent = Agent(
+# send_email_agent = Agent(
+#     name="Send Email Agent",
+#     instructions="""
+#         You are an email-sending expert. Your task is to send an email with the provided summary as an attachment.
+#         Send a professional email to the recipient with the subject and body provided from the context.
+#         The input will include:
+#         - recipient_email: The email address of the recipient.
+#         - subject: The subject of the email.
+#         - body: The body of the email.
+#         - summary: The summary content to be attached as a file.
+#         Save the summary as a text file named 'summary.txt' and attach it to the email.
+#         Ensure the email is sent successfully using the provided SMTP server details.
+#     """,
+#     tools=[send_email],
+#     model="gpt-4",
+#     output_type=str,
+# )
+
+
+send_email_with_doc_attached_agent = Agent(
     name="Send Email Agent",
     instructions="""
-        You are an email-sending expert. Your task is to send an email with the provided summary as an attachment.
+        You are an email-sending expert. Your task is to send an email with an attachment of the uploaded document.
         Send a professional email to the recipient with the subject and body provided from the context.
         The input will include:
         - recipient_email: The email address of the recipient.
         - subject: The subject of the email.
         - body: The body of the email.
-        - summary: The summary content to be attached as a file.
-        Save the summary as a text file named 'summary.txt' and attach it to the email.
+        Attach the uploaded doucment to the email.
         Ensure the email is sent successfully using the provided SMTP server details.
     """,
-    tools=[send_email],
+    tools=[send_email_with_doc_attached],
     model="gpt-4",
     output_type=str,
 )

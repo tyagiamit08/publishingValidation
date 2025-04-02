@@ -107,6 +107,7 @@ with col1:
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{uploaded_file.name.split('.')[-1]}") as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
             temp_file_path = tmp_file.name
+            file_name= uploaded_file.name
         
         try:
             # Debugging: Log before updating progress
@@ -122,7 +123,7 @@ with col1:
                 logging.info(f"Workflow graph generated and saved at: {graph_path}")
 
             # Continue with the workflow execution
-            workflow_graph = create_workflow_graph(temp_file_path)
+            workflow_graph = create_workflow_graph(temp_file_path,file_name)
             logging.info("Workflow graph created successfully")
             
             # Create initial state
