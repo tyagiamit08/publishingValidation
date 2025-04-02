@@ -15,39 +15,6 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# @function_tool
-# def send_email(recipient_email: str, subject: str, body: str, summary: str, email_from_alias: str = None) -> str:
-#     """Sends an email with the provided details and attaches the summary."""
-#     try:
-#         # Log the email details
-#         logging.info(f"Attempting to send email to: {recipient_email}")
-#         logging.info(f"Subject: {subject}")
-#         logging.info(f"Body: {body}")
-#         if email_from_alias:
-#             logging.info(f"Email From Alias: {email_from_alias}")
-
-#         # Create the email
-#         msg = EmailMessage()
-#         msg["Subject"] = subject
-#         msg["From"] = f"{email_from_alias} <{os.getenv('EMAIL_SENDER')}>" if email_from_alias else os.getenv("EMAIL_SENDER")
-#         msg["To"] = recipient_email
-#         msg.set_content(body)
-
-#         # Attach the summary as a text file
-#         msg.add_attachment(summary.encode("utf-8"), maintype="text", subtype="plain", filename="summary.txt")
-
-#         # Send the email using SMTP
-#         with smtplib.SMTP_SSL(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT"))) as server:
-#             server.login(os.getenv("EMAIL_SENDER"), os.getenv("EMAIL_PASSWORD"))
-#             server.send_message(msg)
-
-#         logging.info("Email sent successfully!")
-#         return "Email sent successfully!"
-#     except Exception as e:
-#         logging.error(f"Error sending email: {str(e)}", exc_info=True)
-#         return f"Error sending email: {str(e)}"
-
-
 @function_tool
 def extract_document_content(doc_path: str) -> str:
     """Reads the content of a DOC, DOCX, or PDF file."""

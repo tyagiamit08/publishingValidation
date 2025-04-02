@@ -2,9 +2,6 @@ import os
 from openai import AsyncOpenAI
 from agents import (
     Agent,
-    Runner,
-    trace,
-    function_tool,
     set_default_openai_api,
     set_default_openai_client,
     set_tracing_disabled,
@@ -104,25 +101,6 @@ draft_email_agent = Agent(
     model=EMAIL_DRAFTING_MODEL,
     output_type=EmailDetail,
 )
-
-# send_email_agent = Agent(
-#     name="Send Email Agent",
-#     instructions="""
-#         You are an email-sending expert. Your task is to send an email with the provided summary as an attachment.
-#         Send a professional email to the recipient with the subject and body provided from the context.
-#         The input will include:
-#         - recipient_email: The email address of the recipient.
-#         - subject: The subject of the email.
-#         - body: The body of the email.
-#         - summary: The summary content to be attached as a file.
-#         Save the summary as a text file named 'summary.txt' and attach it to the email.
-#         Ensure the email is sent successfully using the provided SMTP server details.
-#     """,
-#     tools=[send_email],
-#     model="gpt-4",
-#     output_type=str,
-# )
-
 
 send_email_with_doc_attached_agent = Agent(
     name="Send Email Agent",
