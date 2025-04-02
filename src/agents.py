@@ -67,7 +67,7 @@ DRAFT_EMAIL_INSTRUCTIONS="""
         The email should include:
         - A clear and concise subject line based on the provided summary.
         - A well-structured body that includes:
-            - A greeting: "Dear Recipient."
+            - A greeting: "Dear [recipient_name]"
             - A brief introduction providing context about the attachment (e.g., "Please find attached the document on the key points").
             - A polite request for feedback or action (e.g., "Kindly review the document and share your feedback or let us know if further clarification is needed.").
             - A closing statement: "Best Regards."

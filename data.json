@@ -1,34 +1,34 @@
 {
     "clients": [
         {
-            "name": "Nestle",
+            "name": "IBM",
             "dcs": {
                 "name": "John Doe",
                 "email": "",
                 "assistants": [
                     {
-                        "name": "Jane Smith",
-                        "email": "tyagiamit08@gmail.com"
+                        "name": "Amit Tyagi",
+                        "email": "amit_k_tyagi@mckinsey.com"
                     },
                     {
-                        "name": "Emily Davis",
+                        "name": "Peter Jason",
                         "email": "tyagiamit08@gmail.com"
                     }
                 ]
             }
         },
         {
-            "name": "IKEA",
+            "name": "Neste",
             "dcs": {
-                "name": "Michael Brown",
+                "name": "Michale",
                 "email": "",
                 "assistants": [
                     {
-                        "name": "Chris Wilson",
-                        "email": "tyagiamit08@gmail.com"
+                        "name": "Michael Bason",
+                        "email": "amit_k_tyagi@mckinsey.com"
                     },
                     {
-                        "name": "Patricia Johnson",
+                        "name": "Boro Fanthom",
                         "email": "tyagiamit08@gmail.com"
                     }
                 ]

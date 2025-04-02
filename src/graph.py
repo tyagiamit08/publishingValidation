@@ -12,7 +12,7 @@ from src.agents import (
     send_email_with_doc_attached_agent
 )
 
-from src.utils import verify_client
+from src.utils import verify_client, get_assistants_for_client
 from agents import Runner
 from IPython.display import Image, display
 
@@ -204,35 +204,62 @@ async def email_sender_with_doc_attached(state: State) -> State:
         return state
     
     try:
-        logging.info(f"---------------Sending email to {state.recipient_email} ---------------")
-        email_input = {
-            "recipient_email": state.recipient_email,
-            "subject": state.email_details.subject,
-            "body": state.email_details.body,
-            # "summary": state.summary,
-            "email_from_alias": state.email_from_alias,
-            "file_path":state.document_path,
-            "file_name":state.document_name
-        }
-        
-        result = await Runner.run(
-            send_email_with_doc_attached_agent,
-            [
-                {
-                    "role": "user",
-                    "content": f"""
-                    Please send an email to {state.recipient_email} with email from alias '{state.email_from_alias}'
-                    with the subject '{email_input['subject']}', the following body text, 
-                    and an attached the file as per {email_input['file_path']} with the file name {email_input['file_name']} .
+        for client in state.verified_clients:
+            assistants= get_assistants_for_client(client)
+            if assistants:
+                print(f"Assistants for {client}:")
+                for assistant in assistants:
+                    print(f"- Name: {assistant['name']}, Email: {assistant['email']}")
+                    email_input = {
+                        "recipient_name": assistant['name'],
+                        "recipient_email": assistant['email'],
+                        "subject": state.email_details.subject,
+                        "body": state.email_details.body,
+                        "email_from_alias": state.email_from_alias,
+                        "file_path":state.document_path,
+                        "file_name":state.document_name
+                    }
+                    logging.info(f"---------------Sending email to {email_input['recipient_name']} ---------------")
 
-                    Body:
-                    {email_input['body']}
-                    """,
-                }
-            ]
-        )
+                    result = await Runner.run(
+                        send_email_with_doc_attached_agent,
+                        [
+                            {
+                                "role": "user",
+                                "content": f"""
+                                Please send an email to {email_input['recipient_email']} with email from alias '{state.email_from_alias}'
+                                with the subject '{email_input['subject']}' and the greeting to {email_input['recipient_name']} with the following body text, 
+                                and an attached the file as per {email_input['file_path']} with the file name {email_input['file_name']} .
+
+                                Body:
+                                {email_input['body']}
+                                """,
+                            }
+                        ]
+                    )
+                return State(**{**state.model_dump(), "email_sent": "successfully" in result.final_output.lower()}) 
+            else:
+                print(f"No assistants found for client: {client}")
+                return State(**{**state.model_dump()}) 
         
-        return State(**{**state.model_dump(), "email_sent": "successfully" in result.final_output.lower()})
+        # result = await Runner.run(
+        #     send_email_with_doc_attached_agent,
+        #     [
+        #         {
+        #             "role": "user",
+        #             "content": f"""
+        #             Please send an email to {state.recipient_email} with email from alias '{state.email_from_alias}'
+        #             with the subject '{email_input['subject']}', the following body text, 
+        #             and an attached the file as per {email_input['file_path']} with the file name {email_input['file_name']} .
+
+        #             Body:
+        #             {email_input['body']}
+        #             """,
+        #         }
+        #     ]
+        # )
+        
+        
     except Exception as e:
         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
         return state
