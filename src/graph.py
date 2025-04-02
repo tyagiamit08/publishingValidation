@@ -203,6 +203,8 @@ async def email_sender_with_doc_attached(state: State) -> State:
     if not state.email_details:
         return state
     
+    email_sent = False  # Track if any email was successfully sent
+
     try:
         for client in state.verified_clients:
             assistants= get_assistants_for_client(client)
@@ -237,12 +239,17 @@ async def email_sender_with_doc_attached(state: State) -> State:
                             }
                         ]
                     )
-                return State(**{**state.model_dump(), "email_sent": "successfully" in result.final_output.lower()}) 
+                    # Update email_sent to True if the email was sent successfully
+                    if "successfully" in result.final_output.lower():
+                        email_sent = True
             else:
                 print(f"No assistants found for client: {client}")
-                return State(**{**state.model_dump()}) 
+                logging.info(f"No assistants found for client: {client}")
         
-        # result = await Runner.run(
+        # Update the state based on whether any email was sent
+        return State(**{**state.model_dump(), "email_sent": email_sent})
+	
+	# result = await Runner.run(
         #     send_email_with_doc_attached_agent,
         #     [
         #         {

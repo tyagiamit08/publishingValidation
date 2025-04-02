@@ -7,11 +7,28 @@
                 "email": "",
                 "assistants": [
                     {
-                        "name": "Amit Tyagi",
+                        "name": "Amit Mck",
                         "email": "amit_k_tyagi@mckinsey.com"
                     },
                     {
-                        "name": "Peter Jason",
+                        "name": "Amit Gmail",
+                        "email": "tyagiamit08@gmail.com"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Microsoft",
+            "dcs": {
+                "name": "Lily Patel",
+                "email": "",
+                "assistants": [
+                    {
+                        "name": "Ava Moreno",
+                        "email": "amit_k_tyagi@mckinsey.com"
+                    },
+                    {
+                        "name": "Cameron Brooks",
                         "email": "tyagiamit08@gmail.com"
                     }
                 ]
@@ -24,11 +41,11 @@
                 "email": "",
                 "assistants": [
                     {
-                        "name": "Michael Bason",
+                        "name": "Michael Mck",
                         "email": "amit_k_tyagi@mckinsey.com"
                     },
                     {
-                        "name": "Boro Fanthom",
+                        "name": "Boro Gmail",
                         "email": "tyagiamit08@gmail.com"
                     }
                 ]
