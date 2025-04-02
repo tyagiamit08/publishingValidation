@@ -8,7 +8,6 @@ from src.agents import (
     clients_identification_agent,
     summarization_agent,
     draft_email_agent,
-    # send_email_agent,
     send_email_with_doc_attached_agent
 )
 
@@ -33,23 +32,9 @@ async def document_processor(state: State,document_path:str,file_name:str) -> St
         )
 
         document_content = result.final_output 
-        # new_state = state.model_dump()  # Convert to dict
-        # new_state["document_content"] = document_content
-        # new_state["document_path"] = document_path
-        # new_state["document_name"] = file_name
-        
-        # return State(
-        #     document_content=result.final_output,
-        #     **{key: getattr(state, key) for key in state.__fields__ if key not in ["document_content"]}
-        # )
-        # return State(
-        #     document_content=document_content
-        # )
         print (f"\n\n\n\n ***********************State in Doc Processor ***********************: {state} \n\n\n\n")
 
         return {"document_content": document_content, "document_path": document_path,"document_name": file_name}
-        # return State(**new_state)  
-        # return State(**{**state.model_dump(), "document_content": result.final_output})
     except Exception as e:
         logging.error(f"Error in document processing: {str(e)}", exc_info=True)
         return State(**{**state.model_dump(), "document_content": f"Error: {str(e)}"})
@@ -65,16 +50,10 @@ async def client_identifier(state: State) -> State:
         )
         # Convert result.final_output to a list of strings (extracting the 'name' attribute)
         client_names = [client.name for client in result.final_output.clients]
-        
-         # Return a new State with only the updated 'clients' field
-        # return State(
-        #     clients=client_names,
-        # )
 
         print (f"\n\n\n\n ***********************State in Client Identifier ***********************: {state} \n\n\n\n")
 
         return {"clients": client_names}
-        # return State(**{**state.model_dump(), "clients": client_names})
     except Exception as e:
         logging.error(f"Error in client identification: {str(e)}", exc_info=True)
         return state
@@ -90,18 +69,9 @@ def client_verifier(state: State) -> State:
         if verify_client(client):
             verified_clients.append(client)
     
-    # return State(
-    #         verified_clients=verified_clients
-    # )
-    
     print (f"\n\n\n\n ***********************State in Client Verifier ***********************: {state} \n\n\n\n")
 
     return {"verified_clients": verified_clients}
-    # return State(
-    #         verified_clients=verified_clients,
-    #         **{key: getattr(state, key) for key in state.__fields__ if key not in ["verified_clients"]}
-    #     )
-    # return State(**{**state.model_dump(), "verified_clients": verified_clients})
 
 async def document_summarizer(state: State) -> State:
     """Summarize the document content."""
@@ -111,23 +81,9 @@ async def document_summarizer(state: State) -> State:
             summarization_agent,
             state.document_content
         )
-        # new_state = state.model_dump()  # Convert to dict
-        # new_state["summary"] = result.final_output  # Update only required fields
-        
-        # return State(
-        #     summary=result.final_output,
-        #     # clients=state.clients,  # Preserve other fields explicitly
-        #     # verified_clients=state.verified_clients,
-        #     # email_details=state.email_details,
-        #     # email_sent=state.email_sent,
-        #     # recipient_email=state.recipient_email,
-        #     # email_from_alias=state.email_from_alias
-        # )
         print (f"\n\n\n\n ***********************State in Summarizer ***********************: {state} \n\n\n\n")
 
         return {"summary": result.final_output}
-        # return State(**new_state) 
-        # return State(**{**state.model_dump(), "summary": result.final_output})
     except Exception as e:
         logging.error(f"Error in document summarization: {str(e)}", exc_info=True)
         return state
@@ -157,46 +113,6 @@ async def email_drafter(state: State) -> State:
     except Exception as e:
         logging.error(f"Error in email drafting: {str(e)}", exc_info=True)
         return state
-
-# async def email_sender(state: State) -> State:
-#     """Send the email with the summary attached."""
-#     if not state.email_details:
-#         return state
-    
-#     try:
-#         logging.info(f"Sending email to {state.recipient_email}")
-#         email_input = {
-#             "recipient_email": state.recipient_email,
-#             "subject": state.email_details.subject,
-#             "body": state.email_details.body,
-#             "summary": state.summary,
-#             "email_from_alias": state.email_from_alias
-#         }
-        
-#         result = await Runner.run(
-#             send_email_agent,
-#             [
-#                 {
-#                     "role": "user",
-#                     "content": f"""
-#                     Please send an email to {state.recipient_email} with email from alias '{state.email_from_alias}'
-#                     with the subject '{email_input['subject']}', the following body text, 
-#                     and an attached summary file.
-
-#                     Body:
-#                     {email_input['body']}
-
-#                     Summary (to be attached as 'summary.txt'):
-#                     {email_input['summary']}
-#                     """,
-#                 }
-#             ]
-#         )
-        
-#         return State(**{**state.model_dump(), "email_sent": "successfully" in result.final_output.lower()})
-#     except Exception as e:
-#         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
-#         return state
 
 async def email_sender_with_doc_attached(state: State) -> State:
     """Send the email with the summary attached."""
@@ -248,24 +164,6 @@ async def email_sender_with_doc_attached(state: State) -> State:
         
         # Update the state based on whether any email was sent
         return State(**{**state.model_dump(), "email_sent": email_sent})
-	
-	# result = await Runner.run(
-        #     send_email_with_doc_attached_agent,
-        #     [
-        #         {
-        #             "role": "user",
-        #             "content": f"""
-        #             Please send an email to {state.recipient_email} with email from alias '{state.email_from_alias}'
-        #             with the subject '{email_input['subject']}', the following body text, 
-        #             and an attached the file as per {email_input['file_path']} with the file name {email_input['file_name']} .
-
-        #             Body:
-        #             {email_input['body']}
-        #             """,
-        #         }
-        #     ]
-        # )
-        
         
     except Exception as e:
         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
@@ -277,34 +175,12 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow = StateGraph(State)
     
     # Add nodes
-    # workflow.add_node("document_processor", document_processor)
     workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
     workflow.add_node("client_identifier", client_identifier)
     workflow.add_node("client_verifier", client_verifier)
     workflow.add_node("document_summarizer", document_summarizer)
     workflow.add_node("email_drafter", email_drafter)
-    # workflow.add_node("email_sender", email_sender)
     workflow.add_node("email_sender", email_sender_with_doc_attached)
-    
-
-    # workflow.add_edge(START,"document_processor")
-    # workflow.add_edge("document_processor", "client_identifier")
-    # workflow.add_edge("client_identifier", "client_verifier")
-    # workflow.add_edge("client_verifier", "document_summarizer")
-    # # workflow.add_edge("document_processor", "document_summarizer")
-    # workflow.add_edge("document_summarizer", "email_drafter")
-    # # workflow.add_edge("client_verifier", "email_sender")
-    # # workflow.add_edge("email_drafter", "email_sender")
-    # # workflow.add_edge("email_sender",END)
-    # # workflow.add_edge("client_verifier",END)
-    # workflow.add_edge("email_drafter",END)
-
-    # workflow.add_edge("document_processor", "client_identifier")
-    # workflow.add_edge("document_processor", "document_summarizer")  # Ensure summarizer gets document content
-    # workflow.add_edge("client_identifier", "client_verifier")
-    # workflow.add_edge("client_verifier", "email_drafter")
-    # workflow.add_edge("document_summarizer", "email_drafter")
-    # workflow.add_edge("email_drafter", END)
     
     # Define edges
     workflow.add_edge(START, "document_processor")
