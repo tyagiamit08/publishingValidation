@@ -45,8 +45,8 @@ with st.sidebar:
     uploaded_file = st.file_uploader("Upload a document", type=["docx", "pdf"])
 
     st.header("Email Configuration")
-    recipient_email = st.text_input("Recipient Email", "tyagiamit08@gmail.com")
-    email_from_alias = st.text_input("Email From Alias", "AI Agent 30Mar")
+    # recipient_email = st.text_input("Recipient Email", "tyagiamit08@gmail.com")
+    email_from_alias = st.text_input("Email From Alias", "AI Agent")
     
     
     #Generate workflow graph
@@ -117,10 +117,10 @@ with col1:
             st.session_state.current_step = "Document Processing"
 
             # Create the workflow graph and update session state
-            graph_path = visualize_graph()
-            if os.path.exists(graph_path):
-                st.session_state.graph_image = graph_path
-                logging.info(f"Workflow graph generated and saved at: {graph_path}")
+            # graph_path = visualize_graph()
+            # if os.path.exists(graph_path):
+            #     st.session_state.graph_image = graph_path
+            #     logging.info(f"Workflow graph generated and saved at: {graph_path}")
 
             # Continue with the workflow execution
             workflow_graph = create_workflow_graph(temp_file_path,file_name)
@@ -135,7 +135,7 @@ with col1:
                 summary="",
                 email_details=None,
                 email_sent=False,
-                recipient_email=recipient_email,
+                # recipient_email=recipient_email,
                 email_from_alias=email_from_alias
             )
             

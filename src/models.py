@@ -22,5 +22,5 @@ class State(BaseModel):
     summary: str = ""
     email_details: Optional[EmailDetail] = None
     email_sent: bool = False
-    recipient_email: str = ""
+    # recipient_email: str = ""
     email_from_alias: str = ""

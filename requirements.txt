@@ -12,3 +12,5 @@ streamlit
 pydot
 networkx
 langgraph
+networkx
+matplotlib

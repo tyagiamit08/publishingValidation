@@ -11,6 +11,10 @@ from src.agents import (
     send_email_with_doc_attached_agent
 )
 
+import networkx as nx
+import matplotlib.pyplot as plt
+from networkx.drawing.nx_pydot import graphviz_layout
+
 from src.utils import verify_client, get_assistants_for_client
 from agents import Runner
 from IPython.display import Image, display
@@ -197,39 +201,84 @@ def create_workflow_graph(document_path: str,file_name:str):
     
     return workflow
 
+# def visualize_graph():
+#     """Generate and save a visualization of the workflow graph."""
+#     try:
+#         placeholder_path= "",
+#         placeholder_file_name=""
+#         # Create the workflow graph
+#         workflow = create_workflow_graph(document_path=placeholder_path,file_name=placeholder_file_name)
+
+#         # Compile the workflow and generate the graph
+#         graph = workflow.compile().get_graph(xray=True)
+
+#         # Save the graph as a PNG image
+#         graph_image_path = os.path.abspath("src/images/workflow_graph.png")
+#         os.makedirs(os.path.dirname(graph_image_path), exist_ok=True)
+
+#         # Use LangGraph's draw_mermaid_png method to get the PNG data
+#         png_data = graph.draw_mermaid_png()
+
+#         # Write the PNG data to a file
+#         with open(graph_image_path, "wb") as f:
+#             f.write(png_data)
+
+#         # Log the absolute path and verify the file exists
+#         logging.info(f"Workflow graph saved at: {graph_image_path}")
+#         if os.path.exists(graph_image_path):
+#             logging.info("Graph image successfully created.")
+#         else:
+#             logging.error("Graph image was not created.")
+
+#         return graph_image_path
+#     except AttributeError as e:
+#         logging.error(f"AttributeError: {str(e)}", exc_info=True)
+#         raise RuntimeError("Failed to generate workflow graph. Ensure LangGraph is properly installed and configured.") from e
+#     except Exception as e:
+#         logging.error(f"Error visualizing graph: {str(e)}", exc_info=True)
+#         raise RuntimeError("Failed to generate workflow graph.") from e
+
 def visualize_graph():
-    """Generate and save a visualization of the workflow graph."""
+    """Generate and save a visualization of the workflow graph using NetworkX + Matplotlib."""
     try:
-        placeholder_path= "",
-        placeholder_file_name=""
+        placeholder_path = ""
+        placeholder_file_name = ""
+
         # Create the workflow graph
-        workflow = create_workflow_graph(document_path=placeholder_path,file_name=placeholder_file_name)
+        workflow = create_workflow_graph(document_path=placeholder_path, file_name=placeholder_file_name)
 
         # Compile the workflow and generate the graph
         graph = workflow.compile().get_graph(xray=True)
 
-        # Save the graph as a PNG image
-        graph_image_path = os.path.abspath("src/images/workflow_graph.png")
-        os.makedirs(os.path.dirname(graph_image_path), exist_ok=True)
+        # Define file paths
+        output_dir = "src/images"
+        os.makedirs(output_dir, exist_ok=True)
+        graph_image_path = os.path.join(output_dir, "workflow_graph.png")
 
-        # Use LangGraph's draw_mermaid_png method to get the PNG data
-        png_data = graph.draw_mermaid_png()
+        # Convert to NetworkX graph
+        G = nx.DiGraph()
+        for edge in graph.edges:
+            G.add_edge(edge.source, edge.target)
 
-        # Write the PNG data to a file
-        with open(graph_image_path, "wb") as f:
-            f.write(png_data)
+        # Use Graphviz dot layout for better structure
+        pos = graphviz_layout(G, prog="dot")  # Uses hierarchical layout
 
-        # Log the absolute path and verify the file exists
-        logging.info(f"Workflow graph saved at: {graph_image_path}")
-        if os.path.exists(graph_image_path):
-            logging.info("Graph image successfully created.")
-        else:
-            logging.error("Graph image was not created.")
+        # Draw the graph
+        # plt.figure(figsize=(5,6))
+        plt.figure(figsize=(7, 8))  # Slightly increase figure size
+        nx.draw(G, pos, 
+                with_labels=True, 
+                node_color="lightblue", 
+                edge_color="gray", 
+                node_size=2000,  # Reduce node size
+                font_size=12,     # Ensure font fits inside
+                font_weight="bold",
+                arrows=True)
+        # nx.draw(G, pos, with_labels=True, node_color="lightblue", edge_color="gray", node_size=2000, font_size=10, arrows=True)
+        plt.savefig(graph_image_path)
+        plt.close()
 
         return graph_image_path
-    except AttributeError as e:
-        logging.error(f"AttributeError: {str(e)}", exc_info=True)
-        raise RuntimeError("Failed to generate workflow graph. Ensure LangGraph is properly installed and configured.") from e
+
     except Exception as e:
-        logging.error(f"Error visualizing graph: {str(e)}", exc_info=True)
-        raise RuntimeError("Failed to generate workflow graph.") from e
+        print(f"Error generating workflow graph: {e}")
