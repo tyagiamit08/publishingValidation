@@ -33,7 +33,7 @@ def extract_document_content(doc_path: str) -> str:
         return "Error: Unsupported file format. Please upload a DOCX or PDF file."
     
 
-@function_tool
+# @function_tool
 def send_email_with_doc_attached(recipient_email: str, subject: str, body: str, doc_temp_path: str, file_name: str, email_from_alias: str = None) -> str:
     """Sends an email with the provided details and attaches the document in the email."""
     try:

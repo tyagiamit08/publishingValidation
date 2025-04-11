@@ -13,18 +13,17 @@ class EmailDetail(BaseModel):
     body: str = Field(..., description="The body content of the email.")
 
 class State(BaseModel):
-    # document_path: str
-    document_content: Annotated[str, "multi"] = ""
+    # Changed from "multi" to "merge" annotation for document_content
+    document_content: Annotated[str, "merge"] = ""
     document_path: str = ""
     document_name: str = ""
     clients: List[str]=[]
-    verified_clients: List[str] = []
+    verified_clients: Annotated[List[str], "merge"] = []
     summary: str = ""
     email_details: Optional[EmailDetail] = None
-    email_sent: bool = False
-    # recipient_email: str = ""
+    email_sent: Annotated[Optional[bool], "merge"] = None #bool = False
     email_from_alias: str = ""
     images: list = []
-    client_names: list  = []
+    client_names: Annotated[list, "merge"] = []
     document_bytes: bytes = b""
-    final_clients: list = []
+    final_clients: List[str]=[]

@@ -10,12 +10,20 @@ from src.agents import (
     draft_email_agent,
     send_email_with_doc_attached_agent
 )
-
+from src.tools import send_email_with_doc_attached
 import networkx as nx
 import matplotlib.pyplot as plt
 import base64
 from networkx.drawing.nx_pydot import graphviz_layout
 
+from src.nodes import (
+    client_identifier,
+    client_verifier,
+    client_consolidator,
+    extract_images_node,
+    extract_client_names_node,
+    document_processor
+)
 from src.utils import verify_client, get_assistants_for_client,getCleanNames,save_state_to_file
 from src.document_processor import extract_images_from_pdf, extract_images_from_docx
 from agents import Runner
@@ -26,75 +34,6 @@ import ast
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-client = OpenAI()
-
-# # Define the workflow nodes
-async def document_processor(state: State,document_path:str,file_name:str) -> State:
-    """Process the document and extract its content."""
-    try:
-        logging.info(f"Processing document: {document_path}")
-
-        with open(document_path, "rb") as f:
-            file_bytes = f.read()
-    
-        result = await Runner.run(
-            doc_processing_agent,
-            [{"role": "user", "content": document_path}],
-        )
-
-        document_content = result.final_output 
-        # print (f"\n\n\n\n ***********************State in Doc Processor ***********************: {state} \n\n\n\n")
-        return {"document_content": document_content, "document_path": document_path,"document_name": file_name,"document_bytes":file_bytes}
-    except Exception as e:
-        logging.error(f"Error in document processing: {str(e)}", exc_info=True)
-        return State(**{**state.model_dump(), "document_content": f"Error: {str(e)}"})
-
-async def client_identifier(state: State) -> State:
-    """Identify clients in the document content."""
-    try:
-        logging.info("Identifying clients in document")
-
-        result = await Runner.run(
-            clients_identification_agent,
-            state.document_content
-        )
-        client_names = [client.name for client in result.final_output.clients]
-        save_state_to_file(client_names, "clients_Identified.txt")
-        # print (f"\n\n\n\n ***********************State in Client Identifier ***********************: {state} \n\n\n\n")
-        return {"clients": client_names}
-    except Exception as e:
-        logging.error(f"Error in client identification: {str(e)}", exc_info=True)
-        return state
-
-def client_verifier(state: State) -> State:
-    """Verify identified clients against a predefined list."""
-    logging.info("Verifying identified clients")
-    if not state.final_clients:
-        return state
-    
-    verified_clients = []
-    final_clients_list=state.final_clients.split(",")
-    for client in final_clients_list:
-        if verify_client(client.strip()):
-            verified_clients.append(client)
-
-    save_state_to_file(verified_clients, "verified_clients.txt")
-    return {"verified_clients": verified_clients}
-
-async def document_summarizer(state: State) -> State:
-    """Summarize the document content."""
-    try:
-        logging.info("Summarizing document")
-        result = await Runner.run(
-            summarization_agent,
-            state.document_content
-        )
-        print (f"\n\n\n\n ***********************State in Summarizer ***********************: {state} \n\n\n\n")
-        return {"summary": result.final_output}
-    except Exception as e:
-        logging.error(f"Error in document summarization: {str(e)}", exc_info=True)
-        return state
 
 async def email_drafter(state: State) -> State:
     """Draft an email based on the document summary."""
@@ -109,17 +48,22 @@ async def email_drafter(state: State) -> State:
             state.document_content
         )
         
-        # print (f"\n\n\n\n ***********************State in Email Drafter ***********************: {state} \n\n\n\n")
         save_state_to_file(result.final_output, "email_draft.txt")
-        return {"email_details": result.final_output}
+        
+        # Use the proper state update pattern
+        state_dict = state.model_dump()
+        state_dict["email_details"] = result.final_output
+        return State(**state_dict)
     except Exception as e:
         logging.error(f"Error in email drafting: {str(e)}", exc_info=True)
         return state
 
 async def email_sender_with_doc_attached(state: State) -> State:
     """Send the email with the summary attached."""
-    if not state.email_details:
-        return state
+
+    print(f"\n\nExecuting --------email_sender_with_doc_attached\n\n" )
+    # if not state.email_details:
+    #     return state
     
     email_sent = False  # Track if any email was successfully sent
 
@@ -130,175 +74,63 @@ async def email_sender_with_doc_attached(state: State) -> State:
                 print(f"Assistants for {client}:")
                 for assistant in assistants:
                     print(f"- Name: {assistant['name']}, Email: {assistant['email']}")
+
                     email_input = {
                         "recipient_name": assistant['name'],
                         "recipient_email": assistant['email'],
-                        "subject": state.email_details.subject,
-                        "body": state.email_details.body,
+                        "subject": f"Review Document : {client}", # Fixed the f-string
+                        "body": "TESTING", 
                         "email_from_alias": state.email_from_alias,
                         "file_path":state.document_path,
                         "file_name":state.document_name
                     }
                     logging.info(f"---------------Sending email to {email_input['recipient_name']} ---------------")
 
-                    result = await Runner.run(
-                        send_email_with_doc_attached_agent,
-                        [
-                            {
-                                "role": "user",
-                                "content": f"""
-                                Please send an email to {email_input['recipient_email']} with email from alias '{state.email_from_alias}'
-                                with the subject '{email_input['subject']}' and the greeting to {email_input['recipient_name']} with the following body text, 
-                                and an attached the file as per {email_input['file_path']} with the file name {email_input['file_name']} .
-
-                                Body:
-                                {email_input['body']}
-                                """,
-                            }
-                        ]
-                    )
-                    # Update email_sent to True if the email was sent successfully
-                    if "successfully" in result.final_output.lower():
+                    result = send_email_with_doc_attached(email_input['recipient_email'], email_input['subject'], email_input['body'], state.document_path, state.document_name, email_input['email_from_alias'])
+                    
+                    if "successfully" in result.lower():
                         email_sent = True
+                    
             else:
                 print(f"No assistants found for client: {client}")
                 logging.info(f"No assistants found for client: {client}")
         
-        # Update the state based on whether any email was sent
-        return State(**{**state.model_dump(), "email_sent": email_sent})
+        logging.info("Workflow completed successfully. !!!!")
         
+        # Create a new state with only the email_sent field updated
+        # This avoids touching the verified_clients field
+        state_dict = state.model_dump()
+        state_dict["email_sent"] = email_sent
+        return State(**state_dict)
+            
     except Exception as e:
         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
         return state
 
 
-async def extract_images_node(state: State) -> State:
-    file_name = state.document_name.lower()
-    file_bytes = state.document_bytes
-    
-    print ("FileName---->",file_name)
-
-    if file_name.endswith(".pdf"):
-        images = extract_images_from_pdf(file_bytes)
-    elif file_name.endswith(".docx"):
-        images = extract_images_from_docx(file_bytes)
-    else:
-        raise ValueError("Unsupported file type. Only .pdf and .docx are supported.")
-    
-    return  {"images": images}
-
-async def extract_client_names_node(state: State) -> State:
-    """Extract client names from the images."""
-    try:
-        if not state.images :
-            logging.info("Image not found in the uploaded document.")
-            return state
-        
-        logging.info("Extracting Client Names")
-
-        images= state.images
-        extracted_names = []
-
-          # for img_bytes in images:
-        for img_bytes in images:
-            img_b64 = base64.b64encode(img_bytes).decode()
-
-            response = client.chat.completions.create(
-                model="gpt-4-turbo",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", 
-                             "text":
-                             """You are an expert in extracting client-related names from images. Your task is to analyze the provided image base64 string and identify all client-related names, such as:
-                                - Company names
-                                - Business entities
-                                - Organizations
-
-                                Guidelines for Extraction:
-                                - Focus only on client-related names; ignore unrelated text or general information or other unrelated text.
-                                - Ensure accuracy and context awareness to differentiate between actual client names and other text.
-                                - Consider variations of client names (e.g., "ABC Corp." vs. "ABC Corporation").
-                                - Return the extracted names as a Python list of strings, with each name as a separate list item.
-
-                                Example Output:
-                                ["Microsoft", "Amazon"]"""
-                              },
-                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}}
-                        ]
-                    }
-                ]
-            )
-            cleaned_list = re.split(r'\n-?\s*', response.choices[0].message.content.strip())  # handles both "\n" and "\n- " styles
-            extracted_names.extend([item for item in cleaned_list if item])  
-        
-        cleaned_names = getCleanNames(extracted_names)
-        save_state_to_file(cleaned_names, "clients_Identified_image.txt")
-        # print (f"\n\n\n\n ***********************Extracted Client Names ***********************: {cleaned_names} \n\n\n\n")
-        return {"client_names": cleaned_names}
-    except Exception as e:
-        logging.error(f"Error in client names extraction: {str(e)}", exc_info=True)
-        return state
-
-
-def client_consolidator(state: State) -> State:
-    """
-    Combine two lists of client names, remove duplicates, sort them, and return as a comma-separated string.
-    """
-
-    print (f"\n\n\n\n ***********************Client Names from Text ***********************: {state.clients} \n\n\n\n")
-    print (f"\n\n\n\n ***********************Client Names from Images ***********************: {state.client_names} \n\n\n\n")
-    combined_clients_set = set(state.client_names + state.clients)
-    print (f"\n\n\n\n ***********************Client Names from Set ***********************: {combined_clients_set} \n\n\n\n")
-    sorted_list = sorted(combined_clients_set)
-    final_clients=", ".join(sorted_list)        
-    save_state_to_file(final_clients, "final_clients.txt")
-    return {"final_clients": final_clients}
-
-def create_workflow_graph(document_path: str,file_name:str):
+def create_workflow_graph(document_path: str, file_name: str):
     """Create the workflow graph using LangGraph."""
     # Create a new graph
     workflow = StateGraph(State)
 
-    workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
+    # Define nodes
+    workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path, file_name)))
     workflow.add_node("client_identifier", client_identifier)
     workflow.add_node("extract_images", extract_images_node)
     workflow.add_node("extract_clients", extract_client_names_node)
     workflow.add_node("client_consolidator", client_consolidator)
     workflow.add_node("client_verifier", client_verifier)
-    workflow.add_node("email_drafter", email_drafter)
+    workflow.add_node("email_sender", email_sender_with_doc_attached)
     
+    # Define a sequential workflow instead of branching
     workflow.add_edge(START, "document_processor")
     workflow.add_edge("document_processor", "client_identifier")
-    workflow.add_edge("document_processor", "extract_images")
+    workflow.add_edge("client_identifier", "extract_images")
     workflow.add_edge("extract_images", "extract_clients")
-    workflow.add_edge("client_identifier", "client_consolidator")
     workflow.add_edge("extract_clients", "client_consolidator")
     workflow.add_edge("client_consolidator", "client_verifier")
-    workflow.add_edge("client_verifier", "email_drafter")
-    workflow.add_edge("email_drafter", END)
-
-    # # Add nodes
-    # workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
-    # workflow.add_node("client_identifier", client_identifier)
-    # workflow.add_node("client_verifier", client_verifier)
-    # workflow.add_node("email_drafter", email_drafter)
-    # # workflow.add_node("email_sender", email_sender_with_doc_attached)
-    # workflow.add_node("extract_images", extract_images_node)
-    # workflow.add_node("extract_clients", extract_client_names_node)
-    # workflow.add_node("client_consolidator", client_consolidator)
-    
-    # # Define edges
-    # workflow.add_edge(START, "document_processor")
-    # workflow.add_edge("document_processor", "client_identifier")
-    # workflow.add_edge("document_processor", "extract_images")
-    # workflow.add_edge("extract_images", "extract_clients")
-    # workflow.add_edge("extract_clients", "client_consolidator")
-    # workflow.add_edge("client_identifier", "client_consolidator")
-    # workflow.add_edge("client_consolidator", "client_verifier")
-    # workflow.add_edge("client_verifier", "email_drafter")
-    # workflow.add_edge("email_drafter", END)
+    workflow.add_edge("client_verifier", "email_sender")
+    workflow.add_edge("email_sender", END)
 
     # Set the entry point
     workflow.set_entry_point("document_processor")

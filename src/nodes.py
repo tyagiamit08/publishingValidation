@@ -1,0 +1,199 @@
+import logging
+from src.models import State
+from src.agents import (
+    doc_processing_agent,
+    clients_identification_agent,
+    summarization_agent,
+)
+import base64
+from src.utils import verify_client,getCleanNames,save_state_to_file
+from src.document_processor import extract_images_from_pdf, extract_images_from_docx
+from agents import Runner
+from openai import OpenAI
+import re
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+
+client = OpenAI()
+
+# # Define the workflow nodes
+async def document_processor(state: State,document_path:str,file_name:str) -> State:
+    """Process the document and extract its content."""
+    try:
+        logging.info(f"Processing document: {document_path}")
+
+        with open(document_path, "rb") as f:
+            file_bytes = f.read()
+    
+        result = await Runner.run(
+            doc_processing_agent,
+            [{"role": "user", "content": document_path}],
+        )
+
+        document_content = result.final_output 
+        
+        # Use the proper state update pattern
+        state_dict = state.model_dump()
+        state_dict["document_content"] = document_content
+        state_dict["document_path"] = document_path
+        state_dict["document_name"] = file_name
+        state_dict["document_bytes"] = file_bytes
+        return State(**state_dict)
+    except Exception as e:
+        logging.error(f"Error in document processing: {str(e)}", exc_info=True)
+        return State(**{**state.model_dump(), "document_content": f"Error: {str(e)}"})
+
+async def client_identifier(state: State) -> State:
+    """Identify clients in the document content."""
+    try:
+        logging.info("Identifying clients in document")
+
+        result = await Runner.run(
+            clients_identification_agent,
+            state.document_content
+        )
+        client_names = [client.name for client in result.final_output.clients]
+        save_state_to_file(client_names, "clients_Identified.txt")
+
+        # Use the proper state update pattern
+        state_dict = state.model_dump()
+        state_dict["clients"] = client_names
+        return State(**state_dict)
+    except Exception as e:
+        logging.error(f"Error in client identification: {str(e)}", exc_info=True)
+        return state
+
+def client_verifier(state: State) -> State:
+    """Verify identified clients against a predefined list."""
+    logging.info("Verifying identified clients")
+    if not state.final_clients:
+        return state
+    
+    verified_clients = []
+    # No need to split since final_clients is now a list
+    for client in state.final_clients:
+        if verify_client(client.strip()):
+            verified_clients.append(client)
+
+    save_state_to_file(verified_clients, "verified_clients.txt")
+    
+    # Create a new state with the verified_clients field updated
+    state_dict = state.model_dump()
+    state_dict["verified_clients"] = verified_clients
+    return State(**state_dict)
+
+async def document_summarizer(state: State) -> State:
+    """Summarize the document content."""
+    try:
+        logging.info("Summarizing document")
+        result = await Runner.run(
+            summarization_agent,
+            state.document_content
+        )
+        
+        # Use the proper state update pattern
+        state_dict = state.model_dump()
+        state_dict["summary"] = result.final_output
+        return State(**state_dict)
+    except Exception as e:
+        logging.error(f"Error in document summarization: {str(e)}", exc_info=True)
+        return state
+
+async def extract_images_node(state: State) -> State:
+    file_name = state.document_name.lower()
+    file_bytes = state.document_bytes
+    
+    print ("FileName---->",file_name)
+
+    if file_name.endswith(".pdf"):
+        images = extract_images_from_pdf(file_bytes)
+    elif file_name.endswith(".docx"):
+        images = extract_images_from_docx(file_bytes)
+    else:
+        raise ValueError("Unsupported file type. Only .pdf and .docx are supported.")
+    
+    # Use the proper state update pattern
+    state_dict = state.model_dump()
+    state_dict["images"] = images
+    return State(**state_dict)
+
+async def extract_client_names_node(state: State) -> State:
+    """Extract client names from the images."""
+    try:
+        if not state.images:
+            logging.info("Image not found in the uploaded document.")
+            return state
+        
+        logging.info("Extracting Client Names")
+
+        images = state.images
+        extracted_names = []
+
+        for img_bytes in images:
+            img_b64 = base64.b64encode(img_bytes).decode()
+
+            response = client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", 
+                             "text":
+                             """You are an expert in extracting client-related names from images. Your task is to analyze the provided image base64 string and identify all client-related names, such as:
+                                - Company names
+                                - Business entities
+                                - Organizations
+
+                                Guidelines for Extraction:
+                                - Focus only on client-related names; ignore unrelated text or general information or other unrelated text.
+                                - Ensure accuracy and context awareness to differentiate between actual client names and other text.
+                                - Consider variations of client names (e.g., "ABC Corp." vs. "ABC Corporation").
+                                - Return the extracted names as a Python list of strings, with each name as a separate list item.
+
+                                Example Output:
+                                ["Microsoft", "Amazon"]"""
+                              },
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}}
+                        ]
+                    }
+                ]
+            )
+            cleaned_list = re.split(r'\n-?\s*', response.choices[0].message.content.strip())  # handles both "\n" and "\n- " styles
+            extracted_names.extend([item for item in cleaned_list if item])  
+        
+        cleaned_names = getCleanNames(extracted_names)
+        save_state_to_file(cleaned_names, "clients_Identified_image.txt")
+        
+        # Use the proper state update pattern
+        state_dict = state.model_dump()
+        state_dict["client_names"] = cleaned_names
+        return State(**state_dict)
+        
+    except Exception as e:
+        logging.error(f"Error in client names extraction: {str(e)}", exc_info=True)
+        return state
+    
+async def client_consolidator(state: State) -> State:
+    """
+    Combine two lists of client names, remove duplicates, and sort them.
+    """
+    print(f"\n\n\n\n ***********************Client Names from Text ***********************: {state.clients} \n\n\n\n")
+    print(f"\n\n\n\n ***********************Client Names from Images ***********************: {state.client_names} \n\n\n\n")
+    
+    # Combine lists and remove duplicates
+    combined_clients_set = set(state.client_names + state.clients)
+    print(f"\n\n\n\n ***********************Client Names from Set ***********************: {combined_clients_set} \n\n\n\n")
+    
+    # Create a sorted list (not a string)
+    sorted_list = sorted(combined_clients_set)
+    
+    # Save as comma-separated string for logging/display purposes only
+    final_clients_str = ", ".join(sorted_list)        
+    save_state_to_file(final_clients_str, "final_clients.txt")
+    
+    # Return a list for the final_clients field, not a string
+    state_dict = state.model_dump()
+    state_dict["final_clients"] = sorted_list
+    return State(**state_dict)
