@@ -62,7 +62,7 @@ Ensure the summary preserves the context and tone of the document while avoiding
 DRAFT_EMAIL_INSTRUCTIONS="""
         You are an expert email drafting agent. Your task is to create a professional and concise email.
         The email should include:
-        - A clear and concise subject line based on the provided summary.
+        - A clear and concise subject line based on the provided content.
         - A well-structured body that includes:
             - A greeting: "Dear [recipient_name]"
             - A brief introduction providing context about the attachment (e.g., "Please find attached the document on the key points").

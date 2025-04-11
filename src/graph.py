@@ -78,7 +78,7 @@ def client_verifier(state: State) -> State:
     for client in final_clients_list:
         if verify_client(client.strip()):
             verified_clients.append(client)
-            
+
     save_state_to_file(verified_clients, "verified_clients.txt")
     return {"verified_clients": verified_clients}
 
@@ -99,18 +99,18 @@ async def document_summarizer(state: State) -> State:
 async def email_drafter(state: State) -> State:
     """Draft an email based on the document summary."""
     try:
-        if not state.summary and not state.verified_clients:
-            logging.error("Document content is missing or verified clients are missing. Skipping Email Draft.")
+        if not state.document_content and not state.verified_clients:
+            logging.error("Document content is missing. Skipping Email Draft.")
             return state
         
         logging.info("Drafting email")
         result = await Runner.run(
             draft_email_agent,
-            state.summary
+            state.document_content
         )
         
-        print (f"\n\n\n\n ***********************State in Email Drafter ***********************: {state} \n\n\n\n")
-        save_state_to_file(state.verified_clients, "verified_clients.txt")
+        # print (f"\n\n\n\n ***********************State in Email Drafter ***********************: {state} \n\n\n\n")
+        save_state_to_file(result.final_output, "email_draft.txt")
         return {"email_details": result.final_output}
     except Exception as e:
         logging.error(f"Error in email drafting: {str(e)}", exc_info=True)
@@ -267,6 +267,7 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow.add_node("extract_clients", extract_client_names_node)
     workflow.add_node("client_consolidator", client_consolidator)
     workflow.add_node("client_verifier", client_verifier)
+    workflow.add_node("email_drafter", email_drafter)
     
     workflow.add_edge(START, "document_processor")
     workflow.add_edge("document_processor", "client_identifier")
@@ -275,7 +276,8 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow.add_edge("client_identifier", "client_consolidator")
     workflow.add_edge("extract_clients", "client_consolidator")
     workflow.add_edge("client_consolidator", "client_verifier")
-    workflow.add_edge("client_verifier", END)
+    workflow.add_edge("client_verifier", "email_drafter")
+    workflow.add_edge("email_drafter", END)
 
     # # Add nodes
     # workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
