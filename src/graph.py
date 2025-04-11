@@ -74,13 +74,12 @@ def client_verifier(state: State) -> State:
         return state
     
     verified_clients = []
-    # for client in state.final_clients:
-    #     if verify_client(client):
-    #         verified_clients.append(client)
-    verified_clients = [client for client in state.final_clients if verify_client(client)]
-        
-    print (f"\n\n\n\n ***********************State in Client Verifier ***********************: {state} \n\n\n\n")
-    save_state_to_file(state.client_names, "clients_from_image.txt")
+    final_clients_list=state.final_clients.split(",")
+    for client in final_clients_list:
+        if verify_client(client.strip()):
+            verified_clients.append(client)
+            
+    save_state_to_file(verified_clients, "verified_clients.txt")
     return {"verified_clients": verified_clients}
 
 async def document_summarizer(state: State) -> State:
@@ -267,6 +266,7 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow.add_node("extract_images", extract_images_node)
     workflow.add_node("extract_clients", extract_client_names_node)
     workflow.add_node("client_consolidator", client_consolidator)
+    workflow.add_node("client_verifier", client_verifier)
     
     workflow.add_edge(START, "document_processor")
     workflow.add_edge("document_processor", "client_identifier")
@@ -274,7 +274,8 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow.add_edge("extract_images", "extract_clients")
     workflow.add_edge("client_identifier", "client_consolidator")
     workflow.add_edge("extract_clients", "client_consolidator")
-    workflow.add_edge("client_consolidator", END)
+    workflow.add_edge("client_consolidator", "client_verifier")
+    workflow.add_edge("client_verifier", END)
 
     # # Add nodes
     # workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))

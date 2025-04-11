@@ -14,7 +14,6 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT", "465")
 
-VALID_CLIENTS = ["Neste", "IBM", "IKEA", "Microsoft", "Unilever"]
 
 # Agent models
 DOC_PROCESSING_MODEL = "gpt-3.5-turbo"

@@ -9,11 +9,11 @@ from src.models import ClientIdentificationResult
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
-VALID_CLIENTS = ["Neste", "IBM", "IKEA", "Microsoft", "Unilever"]
+VALID_CLIENTS = ["Neste", "IBM", "IKEA", "Microsoft", "Unilever","Amazon"]
 
 def verify_client(client_name: str) -> bool:
     """Checks if a client is valid based on a predefined list."""
+    print(f"Verifying client: {client_name} in {VALID_CLIENTS}")
     return client_name in VALID_CLIENTS
 
 
