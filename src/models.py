@@ -24,3 +24,7 @@ class State(BaseModel):
     email_sent: bool = False
     # recipient_email: str = ""
     email_from_alias: str = ""
+    images: list = []
+    client_names: list  = []
+    document_bytes: bytes = b""
+    final_clients: list = []

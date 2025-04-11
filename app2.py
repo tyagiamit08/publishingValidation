@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 load_dotenv()
 
-BASE_URL = os.getenv("OPENAI_API_BASE")
+BASE_URL = os.getenv("OPENAI_BASE_URL")
 API_KEY = os.getenv("OPENAI_API_KEY")
 
 client = AsyncOpenAI(
@@ -45,7 +45,7 @@ set_tracing_disabled(disabled=True)
 
 if not BASE_URL or not API_KEY:
     raise ValueError(
-        "Please set OPENAI_API_BASE, OPENAI_API_KEY via env var or code."
+        "Please set OPENAI_BASE_URL, OPENAI_API_KEY via env var or code."
     )
 # endregion
 

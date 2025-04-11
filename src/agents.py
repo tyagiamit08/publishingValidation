@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configure OpenAI client
 client = AsyncOpenAI(
-    base_url=os.getenv("OPENAI_API_BASE"),
+    base_url=os.getenv("OPENAI_BASE_URL"),
     api_key=os.getenv("OPENAI_API_KEY"),
 )
 
@@ -70,7 +70,6 @@ DRAFT_EMAIL_INSTRUCTIONS="""
             - A closing statement: "Best Regards."
         Ensure the tone is professional, polite, and appropriate for the recipient.
     """
-
 
 # Define agents
 doc_processing_agent = Agent(

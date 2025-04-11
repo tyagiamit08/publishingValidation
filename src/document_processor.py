@@ -4,14 +4,16 @@ import PyPDF2
 import logging
 from openai import AsyncOpenAI
 from agents import Agent, Runner, trace, function_tool
-from config import OPENAI_API_BASE, OPENAI_API_KEY, DOC_PROCESSING_MODEL
+from config import OPENAI_BASE_URL, OPENAI_API_KEY, DOC_PROCESSING_MODEL
+import pdfplumber
+import io
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize OpenAI client
 client = AsyncOpenAI(
-    base_url=OPENAI_API_BASE,
+    base_url=OPENAI_BASE_URL,
     api_key=OPENAI_API_KEY,
 )
 
@@ -43,6 +45,22 @@ def process_pdf(doc_path):
         logging.error(f"Error reading PDF file: {str(e)}", exc_info=True)
         return f"Error reading PDF file: {str(e)}"
 
+def extract_images_from_pdf(file_bytes):
+    images = []
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        for page in pdf.pages:
+            im = page.to_image(resolution=300)
+            img_bytes = io.BytesIO()
+            im.original.save(img_bytes, format='PNG')
+            images.append(img_bytes.getvalue())
+    return images
 
-
-
+def extract_images_from_docx(file_bytes):
+    images = []
+    doc = Document(io.BytesIO(file_bytes))
+    for rel in doc.part._rels:
+        rel = doc.part._rels[rel]
+        if "image" in rel.target_ref:
+            image_data = rel.target_part.blob
+            images.append(image_data)
+    return images

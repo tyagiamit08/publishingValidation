@@ -14,7 +14,7 @@ from agents import (
 )
 from src.models import EmailDetail
 from config import (
-    OPENAI_API_BASE, OPENAI_API_KEY, EMAIL_DRAFTING_MODEL, 
+    OPENAI_BASE_URL, OPENAI_API_KEY, EMAIL_DRAFTING_MODEL, 
     EMAIL_SENDING_MODEL, EMAIL_SENDER, EMAIL_PASSWORD, 
     SMTP_SERVER, SMTP_PORT         
     )
@@ -23,7 +23,7 @@ from config import (
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 client = AsyncOpenAI(
-    base_url=OPENAI_API_BASE,
+    base_url=OPENAI_BASE_URL,
     api_key=OPENAI_API_KEY,
 )
 
