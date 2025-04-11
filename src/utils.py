@@ -101,7 +101,7 @@ def save_state_to_file(state, filename="state_log.txt"):
         file_path = os.path.join(log_dir, filename)
         
         # Write the state to the file
-        with open(file_path, "a") as file:  # Open in append mode
+        with open(file_path, "w") as file:  # Open in append mode
             file.write(f"\n\n{'*' * 30} State Log {'*' * 30}\n")
             file.write(f"{state}\n")  # Convert state to string
             file.write(f"{'*' * 70}\n")

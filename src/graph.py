@@ -237,7 +237,7 @@ async def extract_client_names_node(state: State) -> State:
         cleaned_names = getCleanNames(extracted_names)
         save_state_to_file(cleaned_names, "clients_Identified_image.txt")
         # print (f"\n\n\n\n ***********************Extracted Client Names ***********************: {cleaned_names} \n\n\n\n")
-        return {"client_names": extracted_names}
+        return {"client_names": cleaned_names}
     except Exception as e:
         logging.error(f"Error in client names extraction: {str(e)}", exc_info=True)
         return state
@@ -247,9 +247,15 @@ def client_consolidator(state: State) -> State:
     """
     Combine two lists of client names, remove duplicates, sort them, and return as a comma-separated string.
     """
+
+    print (f"\n\n\n\n ***********************Client Names from Text ***********************: {state.clients} \n\n\n\n")
+    print (f"\n\n\n\n ***********************Client Names from Images ***********************: {state.client_names} \n\n\n\n")
     combined_clients_set = set(state.client_names + state.clients)
+    print (f"\n\n\n\n ***********************Client Names from Set ***********************: {combined_clients_set} \n\n\n\n")
     sorted_list = sorted(combined_clients_set)
-    return {"final_clients": ", ".join(sorted_list)}
+    final_clients=", ".join(sorted_list)        
+    save_state_to_file(final_clients, "final_clients.txt")
+    return {"final_clients": final_clients}
 
 def create_workflow_graph(document_path: str,file_name:str):
     """Create the workflow graph using LangGraph."""
@@ -260,13 +266,15 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow.add_node("client_identifier", client_identifier)
     workflow.add_node("extract_images", extract_images_node)
     workflow.add_node("extract_clients", extract_client_names_node)
+    workflow.add_node("client_consolidator", client_consolidator)
     
     workflow.add_edge(START, "document_processor")
     workflow.add_edge("document_processor", "client_identifier")
     workflow.add_edge("document_processor", "extract_images")
     workflow.add_edge("extract_images", "extract_clients")
-    workflow.add_edge("client_identifier", END)
-    workflow.add_edge("extract_clients", END)
+    workflow.add_edge("client_identifier", "client_consolidator")
+    workflow.add_edge("extract_clients", "client_consolidator")
+    workflow.add_edge("client_consolidator", END)
 
     # # Add nodes
     # workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
