@@ -60,7 +60,7 @@ async def client_identifier(state: State) -> State:
             state.document_content
         )
         client_names = [client.name for client in result.final_output.clients]
-
+        save_state_to_file(client_names, "clients_Identified.txt")
         # print (f"\n\n\n\n ***********************State in Client Identifier ***********************: {state} \n\n\n\n")
         return {"clients": client_names}
     except Exception as e:
@@ -177,6 +177,8 @@ async def extract_images_node(state: State) -> State:
     file_name = state.document_name.lower()
     file_bytes = state.document_bytes
     
+    print ("FileName---->",file_name)
+
     if file_name.endswith(".pdf"):
         images = extract_images_from_pdf(file_bytes)
     elif file_name.endswith(".docx"):
@@ -233,8 +235,8 @@ async def extract_client_names_node(state: State) -> State:
             extracted_names.extend([item for item in cleaned_list if item])  
         
         cleaned_names = getCleanNames(extracted_names)
-        print (f"\n\n\n\n ***********************Extracted Client Names ***********************: {cleaned_names} \n\n\n\n")
-
+        save_state_to_file(cleaned_names, "clients_Identified_image.txt")
+        # print (f"\n\n\n\n ***********************Extracted Client Names ***********************: {cleaned_names} \n\n\n\n")
         return {"client_names": extracted_names}
     except Exception as e:
         logging.error(f"Error in client names extraction: {str(e)}", exc_info=True)
@@ -255,12 +257,15 @@ def create_workflow_graph(document_path: str,file_name:str):
     workflow = StateGraph(State)
 
     workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path,file_name)))
+    workflow.add_node("client_identifier", client_identifier)
     workflow.add_node("extract_images", extract_images_node)
     workflow.add_node("extract_clients", extract_client_names_node)
     
     workflow.add_edge(START, "document_processor")
+    workflow.add_edge("document_processor", "client_identifier")
     workflow.add_edge("document_processor", "extract_images")
     workflow.add_edge("extract_images", "extract_clients")
+    workflow.add_edge("client_identifier", END)
     workflow.add_edge("extract_clients", END)
 
     # # Add nodes
