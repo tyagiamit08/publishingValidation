@@ -157,54 +157,67 @@ with col1:
                 loader_placeholder = st.empty()  # This will hold the loader message
                 loader_placeholder.text("Processing... Please wait.")
 
-                async for event in graph_app.astream(initial_state):
-                    # logging.info(f"Event received: {event}")
 
-                    event_name = list(event.keys())[0] 
+                final_state = await graph_app.ainvoke(initial_state)
+                print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
+                
+                st.session_state.results = {
+                    "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
+                    "clients": final_state["clients"],
+                    "client_names": final_state["client_names"],
+                    "verified_clients": final_state["verified_clients"],
+                    "email_sent": final_state["email_sent"]
+                }
+                st.session_state.processing_complete = True
+                
+                # async for event in graph_app.astream(initial_state):
+                #     # logging.info(f"Event received: {event}")
 
-                    # Map the event name to a human-readable step name
-                    step_mapping = {
-                        "document_processor": "Document Processing",
-                        "client_identifier": "Client Identification",
-                        "client_verifier": "Client Verification",
-                        "document_summarizer": "Document Summarization",
-                        "email_drafter": "Email Drafting",
-                        "email_sender": "Email Sending"
-                    }
+                #     event_name = list(event.keys())[0] 
 
-                    # if event_name in step_mapping:
-                    #     st.session_state.current_step = step_mapping[event_name]
-                    #     # initial_state.current_state = event_name  # Update the current_state field in the state
-                    #     # Update the progress bar
-                    #     current_step_index += 1
-                    #     progress_bar.progress(int((current_step_index / total_steps) * 100))
+                #     # Map the event name to a human-readable step name
+                #     step_mapping = {
+                #         "document_processor": "Document Processing",
+                #         "client_identifier": "Client Identification",
+                #         "client_verifier": "Client Verification",
+                #         "document_summarizer": "Document Summarization",
+                #         "email_drafter": "Email Drafting",
+                #         "email_sender": "Email Sending"
+                #     }
 
-                    #     loader_placeholder.info(f"Completed {st.session_state.current_step}...")
+                #     # if event_name in step_mapping:
+                #     #     st.session_state.current_step = step_mapping[event_name]
+                #     #     # initial_state.current_state = event_name  # Update the current_state field in the state
+                #     #     # Update the progress bar
+                #     #     current_step_index += 1
+                #     #     progress_bar.progress(int((current_step_index / total_steps) * 100))
 
-                    # time.sleep(2)
+                #     #     loader_placeholder.info(f"Completed {st.session_state.current_step}...")
 
-                    # # Display the event details and current step on the UI
-                    # # with col1:
-                    # #     st.write(f"### Event : {step_mapping[event_name]}")
-                    # #     st.json(event)
+                #     # time.sleep(2)
+
+                #     # # Display the event details and current step on the UI
+                #     # # with col1:
+                #     # #     st.write(f"### Event : {step_mapping[event_name]}")
+                #     # #     st.json(event)
                     
-                    #  # Simulate a loader for better UI experience
+                #     #  # Simulate a loader for better UI experience
                    
-                    if event_name == "email_sender":
-                        print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
-                        final_state = event["email_sender"]
-                        st.session_state.results = {
-                            "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
-                            "clients": final_state["clients"],
-                            "client_names": final_state["client_names"],
-                            "verified_clients": final_state["verified_clients"],
-                            "email_details": "", #final_state["email_details"],
-                            "email_sent": final_state["email_sent"]
-                        }
-                        st.session_state.processing_complete = True
+                #     if event_name == "email_sender":
+                #         print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
+                #         final_state = event["email_sender"]
+                #         st.session_state.results = {
+                #             "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
+                #             "clients": final_state["clients"],
+                #             "client_names": final_state["client_names"],
+                #             "verified_clients": final_state["verified_clients"],
+                #             "email_details": "", #final_state["email_details"],
+                #             "email_sent": final_state["email_sent"]
+                #         }
+                #         st.session_state.processing_complete = True
 
-                        progress_bar.progress(100)
-                        loader_placeholder.empty()
+                #         progress_bar.progress(100)
+                #         loader_placeholder.empty()
 
             asyncio.run(run_workflow())
             
@@ -236,13 +249,6 @@ with col1:
         with st.expander("Verified Clients", expanded=True):
             for client in results["verified_clients"]:
                 st.write(f"- {client}")
-        
-        with st.expander("Email Details", expanded=True):
-            if results["email_details"]:
-                st.subheader("Subject")
-                st.write(results["email_details"].subject)
-                st.subheader("Body")
-                st.write(results["email_details"].body)
         
         if results["email_sent"]:
             st.success("Email sent successfully!")

@@ -35,29 +35,6 @@ import ast
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-async def email_drafter(state: State) -> State:
-    """Draft an email based on the document summary."""
-    try:
-        if not state.document_content and not state.verified_clients:
-            logging.error("Document content is missing. Skipping Email Draft.")
-            return state
-        
-        logging.info("Drafting email")
-        result = await Runner.run(
-            draft_email_agent,
-            state.document_content
-        )
-        
-        save_state_to_file(result.final_output, "email_draft.txt")
-        
-        # Use the proper state update pattern
-        state_dict = state.model_dump()
-        state_dict["email_details"] = result.final_output
-        return State(**state_dict)
-    except Exception as e:
-        logging.error(f"Error in email drafting: {str(e)}", exc_info=True)
-        return state
-
 async def email_sender_with_doc_attached(state: State) -> State:
     """Send the email with the summary attached."""
 
@@ -95,13 +72,15 @@ async def email_sender_with_doc_attached(state: State) -> State:
                 print(f"No assistants found for client: {client}")
                 logging.info(f"No assistants found for client: {client}")
         
-        logging.info("Workflow completed successfully. !!!!")
-        
         # Create a new state with only the email_sent field updated
         # This avoids touching the verified_clients field
-        state_dict = state.model_dump()
-        state_dict["email_sent"] = email_sent
-        return State(**state_dict)
+        # state_dict = state.model_dump()
+        # state_dict["email_sent"] = email_sent
+        # return State(**state_dict)
+
+        return {
+            "email_sent": email_sent
+        }
             
     except Exception as e:
         logging.error(f"Error in email sending: {str(e)}", exc_info=True)
@@ -125,8 +104,10 @@ def create_workflow_graph(document_path: str, file_name: str):
     # Define a sequential workflow instead of branching
     workflow.add_edge(START, "document_processor")
     workflow.add_edge("document_processor", "client_identifier")
-    workflow.add_edge("client_identifier", "extract_images")
+    workflow.add_edge("document_processor", "extract_images")
+    # workflow.add_edge("client_identifier", "extract_images")
     workflow.add_edge("extract_images", "extract_clients")
+    workflow.add_edge("client_identifier", "client_consolidator")
     workflow.add_edge("extract_clients", "client_consolidator")
     workflow.add_edge("client_consolidator", "client_verifier")
     workflow.add_edge("client_verifier", "email_sender")

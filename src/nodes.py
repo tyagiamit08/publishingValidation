@@ -39,7 +39,12 @@ async def document_processor(state: State,document_path:str,file_name:str) -> St
         state_dict["document_path"] = document_path
         state_dict["document_name"] = file_name
         state_dict["document_bytes"] = file_bytes
-        return State(**state_dict)
+        # return State(**state_dict)
+        return{"document_content": document_content,
+                "document_path": document_path,
+                "document_name": file_name,
+                "document_bytes": file_bytes}
+    
     except Exception as e:
         logging.error(f"Error in document processing: {str(e)}", exc_info=True)
         return State(**{**state.model_dump(), "document_content": f"Error: {str(e)}"})
@@ -57,9 +62,10 @@ async def client_identifier(state: State) -> State:
         save_state_to_file(client_names, "clients_Identified.txt")
 
         # Use the proper state update pattern
-        state_dict = state.model_dump()
-        state_dict["clients"] = client_names
-        return State(**state_dict)
+        # state_dict = state.model_dump()
+        # state_dict["clients"] = client_names
+        # return State(**state_dict)
+        return {"clients": client_names}
     except Exception as e:
         logging.error(f"Error in client identification: {str(e)}", exc_info=True)
         return state
@@ -79,26 +85,10 @@ def client_verifier(state: State) -> State:
     save_state_to_file(verified_clients, "verified_clients.txt")
     
     # Create a new state with the verified_clients field updated
-    state_dict = state.model_dump()
-    state_dict["verified_clients"] = verified_clients
-    return State(**state_dict)
-
-async def document_summarizer(state: State) -> State:
-    """Summarize the document content."""
-    try:
-        logging.info("Summarizing document")
-        result = await Runner.run(
-            summarization_agent,
-            state.document_content
-        )
-        
-        # Use the proper state update pattern
-        state_dict = state.model_dump()
-        state_dict["summary"] = result.final_output
-        return State(**state_dict)
-    except Exception as e:
-        logging.error(f"Error in document summarization: {str(e)}", exc_info=True)
-        return state
+    # state_dict = state.model_dump()
+    # state_dict["verified_clients"] = verified_clients
+    # return State(**state_dict)
+    return {"verified_clients": verified_clients}
 
 async def extract_images_node(state: State) -> State:
     file_name = state.document_name.lower()
@@ -114,9 +104,10 @@ async def extract_images_node(state: State) -> State:
         raise ValueError("Unsupported file type. Only .pdf and .docx are supported.")
     
     # Use the proper state update pattern
-    state_dict = state.model_dump()
-    state_dict["images"] = images
-    return State(**state_dict)
+    # state_dict = state.model_dump()
+    # state_dict["images"] = images
+    # return State(**state_dict)
+    return {"images": images}   
 
 async def extract_client_names_node(state: State) -> State:
     """Extract client names from the images."""
@@ -167,9 +158,10 @@ async def extract_client_names_node(state: State) -> State:
         save_state_to_file(cleaned_names, "clients_Identified_image.txt")
         
         # Use the proper state update pattern
-        state_dict = state.model_dump()
-        state_dict["client_names"] = cleaned_names
-        return State(**state_dict)
+        # state_dict = state.model_dump()
+        # state_dict["client_names"] = cleaned_names
+        # return State(**state_dict)
+        return {"client_names": cleaned_names}  
         
     except Exception as e:
         logging.error(f"Error in client names extraction: {str(e)}", exc_info=True)
@@ -179,21 +171,17 @@ async def client_consolidator(state: State) -> State:
     """
     Combine two lists of client names, remove duplicates, and sort them.
     """
-    print(f"\n\n\n\n ***********************Client Names from Text ***********************: {state.clients} \n\n\n\n")
-    print(f"\n\n\n\n ***********************Client Names from Images ***********************: {state.client_names} \n\n\n\n")
+    # combined_clients_set = set(state.client_names + state.clients)
+
+    client_names = state.client_names
+    clients = state.clients
+
+    sorted_list = list(set(client_names + clients)) #sorted(combined_clients_set)
     
-    # Combine lists and remove duplicates
-    combined_clients_set = set(state.client_names + state.clients)
-    print(f"\n\n\n\n ***********************Client Names from Set ***********************: {combined_clients_set} \n\n\n\n")
-    
-    # Create a sorted list (not a string)
-    sorted_list = sorted(combined_clients_set)
-    
-    # Save as comma-separated string for logging/display purposes only
     final_clients_str = ", ".join(sorted_list)        
     save_state_to_file(final_clients_str, "final_clients.txt")
     
-    # Return a list for the final_clients field, not a string
-    state_dict = state.model_dump()
-    state_dict["final_clients"] = sorted_list
-    return State(**state_dict)
+    # state_dict = state.model_dump()
+    # state_dict["final_clients"] = sorted_list
+    # return State(**state_dict)
+    return {"final_clients": sorted_list}

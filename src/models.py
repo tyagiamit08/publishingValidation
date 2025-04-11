@@ -14,16 +14,16 @@ class EmailDetail(BaseModel):
 
 class State(BaseModel):
     # Changed from "multi" to "merge" annotation for document_content
-    document_content: Annotated[str, "merge"] = ""
+    document_content:  str = "" #Annotated[str, "merge"] = ""
     document_path: str = ""
     document_name: str = ""
     clients: List[str]=[]
-    verified_clients: Annotated[List[str], "merge"] = []
+    verified_clients: List[str]=[] #Annotated[List[str], "merge"] = []
     summary: str = ""
     email_details: Optional[EmailDetail] = None
-    email_sent: Annotated[Optional[bool], "merge"] = None #bool = False
+    email_sent: Optional[bool] = False #Annotated[Optional[bool], "merge"] = None #bool = False
     email_from_alias: str = ""
     images: list = []
-    client_names: Annotated[list, "merge"] = []
+    client_names: List[str]=[] #Annotated[list, "merge"] = []
     document_bytes: bytes = b""
     final_clients: List[str]=[]
