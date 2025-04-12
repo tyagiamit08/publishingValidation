@@ -1,10 +1,12 @@
 import os
 import logging
-import asyncio
 import re
 import ast
 from typing import List, Dict
 from src.models import ClientIdentificationResult
+import smtplib
+import json
+from email.message import EmailMessage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,19 +17,6 @@ def verify_client(client_name: str) -> bool:
     """Checks if a client is valid based on a predefined list."""
     print(f"Verifying client: {client_name} in {VALID_CLIENTS}")
     return client_name in VALID_CLIENTS
-
-
-def print_client_identification(result: ClientIdentificationResult):
-    for idx, client in enumerate(result.clients, start=1):
-        print(f"Client {idx}: {client.name}")
-        print("\n" + "-"*30 + "\n")
-
-
-def run_async(coroutine):
-    """Run an async function in a synchronous context."""
-    return asyncio.run(coroutine)
-
-import json
 
 def get_assistants_for_client(client_name: str) -> List[Dict[str, str]]:
     """
@@ -109,6 +98,36 @@ def save_state_to_file(state, filename="state_log.txt"):
         logging.info(f"State saved to {file_path}")
     except Exception as e:
         logging.error(f"Error saving state to file {filename}: {str(e)}", exc_info=True)
+
+def send_email_with_doc_attached(recipient_email: str, subject: str, body: str, doc_temp_path: str, file_name: str, email_from_alias: str = None) -> str:
+    """Sends an email with the provided details and attaches the document in the email."""
+    try:
+        # Log the email details
+        logging.info(f"Attempting to send email to: {recipient_email}")
+
+        # Create the email
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = f"{email_from_alias} <{os.getenv('EMAIL_SENDER')}>" if email_from_alias else os.getenv("EMAIL_SENDER")
+        msg["To"] = recipient_email
+        msg.set_content(body)
+
+        # Attach the uploaded file
+        if doc_temp_path and os.path.exists(doc_temp_path):
+            with open(doc_temp_path, "rb") as f:
+                file_data = f.read()
+            msg.add_attachment(file_data, maintype="application", subtype="octet-stream", filename=file_name)
+
+        # Send the email using SMTP
+        with smtplib.SMTP_SSL(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT"))) as server:
+            server.login(os.getenv("EMAIL_SENDER"), os.getenv("EMAIL_PASSWORD"))
+            server.send_message(msg)
+
+        logging.info("Email sent successfully!")
+        return "Email sent successfully!"
+    except Exception as e:
+        logging.error(f"Error sending email: {str(e)}", exc_info=True)
+        return f"Error sending email: {str(e)}"
 
 def read_email_template():
     """

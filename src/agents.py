@@ -10,13 +10,10 @@ from config import (
     DOC_PROCESSING_MODEL,
     CLIENT_IDENTIFICATION_MODEL
 )
-import smtplib
-from email.message import EmailMessage
 import logging
 from dotenv import load_dotenv
-from src.models import ClientIdentificationResult,EmailDetail
-# from src.tools import send_email, 
-from src.tools import extract_document_content,send_email_with_doc_attached
+from src.models import ClientIdentificationResult
+from src.tools import extract_document_content
 
 # Load environment variables
 load_dotenv()
@@ -64,21 +61,4 @@ clients_identification_agent = Agent(
     instructions=CLIENT_IDENTIFICATION_INSTRUCTION,
     model=CLIENT_IDENTIFICATION_MODEL,
     output_type=ClientIdentificationResult,
-)
-
-send_email_with_doc_attached_agent = Agent(
-    name="Send Email Agent",
-    instructions="""
-        You are an email-sending expert. Your task is to send an email with an attachment of the uploaded document.
-        Send a professional email to the recipient with the subject and body provided from the context.
-        The input will include:
-        - recipient_email: The email address of the recipient.
-        - subject: The subject of the email.
-        - body: The body of the email.
-        Attach the uploaded doucment to the email.
-        Ensure the email is sent successfully using the provided SMTP server details.
-    """,
-    tools=[send_email_with_doc_attached],
-    model="gpt-4",
-    output_type=str,
 )

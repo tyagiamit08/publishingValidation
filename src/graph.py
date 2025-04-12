@@ -3,7 +3,7 @@ import logging
 import asyncio
 from langgraph.graph import StateGraph, START, END
 from src.models import State, ClientIdentificationResult, EmailDetail,ClientInfo
-from src.tools import send_email_with_doc_attached
+from src.utils import send_email_with_doc_attached
 from src.utils import read_email_template
 import networkx as nx
 import matplotlib.pyplot as plt

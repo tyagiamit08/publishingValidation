@@ -10,7 +10,6 @@ import time
 # Import modules
 from src.models import State
 from src.graph import create_workflow_graph, visualize_graph
-from src.utils import run_async
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
