@@ -3,7 +3,6 @@ import logging
 import re
 import ast
 from typing import List, Dict
-from src.models import ClientIdentificationResult
 import smtplib
 import json
 from email.message import EmailMessage
@@ -15,18 +14,11 @@ VALID_CLIENTS = ["Neste", "IBM", "IKEA", "Microsoft", "Unilever","Amazon"]
 
 def verify_client(client_name: str) -> bool:
     """Checks if a client is valid based on a predefined list."""
-    print(f"Verifying client: {client_name} in {VALID_CLIENTS}")
     return client_name in VALID_CLIENTS
 
 def get_assistants_for_client(client_name: str) -> List[Dict[str, str]]:
     """
     Retrieve the list of assistants with their name and email for the given client.
-
-    Args:
-        client_name (str): The name of the client to search for.
-
-    Returns:
-        List[Dict[str, str]]: A list of dictionaries containing assistant names and emails.
     """
     try:
         # Determine the relative path to the data.json file
@@ -52,9 +44,6 @@ def get_assistants_for_client(client_name: str) -> List[Dict[str, str]]:
 def getCleanNames(extracted_names: str) -> List[str]:
     """
     Retrieve a list of clean names from the data.json file.
-
-    Returns:
-        List[str]: A list of clean names.
     """
     # Step 1: Combine lines into a single string
     joined = "\n".join(extracted_names)

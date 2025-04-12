@@ -1,21 +1,11 @@
-import os
 from docx import Document
 import PyPDF2
 import logging
-from openai import AsyncOpenAI
-from agents import Agent, Runner, trace, function_tool
-from config import OPENAI_BASE_URL, OPENAI_API_KEY, DOC_PROCESSING_MODEL
 import pdfplumber
 import io
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Initialize OpenAI client
-client = AsyncOpenAI(
-    base_url=OPENAI_BASE_URL,
-    api_key=OPENAI_API_KEY,
-)
 
 def process_docx(doc_path):
     """Process a DOCX file and extract its text content."""

@@ -2,7 +2,7 @@ import os
 import logging
 import asyncio
 from langgraph.graph import StateGraph, START, END
-from src.models import State, ClientIdentificationResult, EmailDetail,ClientInfo
+from src.models import State
 import networkx as nx
 import matplotlib.pyplot as plt
 import base64
@@ -17,17 +17,12 @@ from src.nodes import (
     document_processor,
     email_sender_with_doc_attached
 )
-from src.document_processor import extract_images_from_pdf, extract_images_from_docx
-from agents import Runner
 from IPython.display import Image, display
-from openai import OpenAI
 import re
 import ast
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
 
 def create_workflow_graph(document_path: str, file_name: str):
     """Create the workflow graph using LangGraph."""
