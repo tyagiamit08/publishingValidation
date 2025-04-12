@@ -19,4 +19,4 @@ class State(BaseModel):
     images: list = []
     clients_from_images: List[str]=[]
     document_bytes: bytes = b""
-    final_clients: List[str]=[]
+    consolidated_clients: List[str]=[]

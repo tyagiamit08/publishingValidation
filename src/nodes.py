@@ -8,7 +8,7 @@ import base64
 from src.utils import (
     verify_client,
     getCleanNames,
-    save_state_to_file,
+    save_info_in_file,
     get_assistants_for_client,
     send_email_with_doc_attached,
     get_email_template
@@ -59,7 +59,7 @@ async def client_identifier(state: State) -> State:
             state.document_content
         )
         identified_clients = [client.name for client in result.final_output.clients]
-        save_state_to_file(identified_clients, "clients_Identified.txt")
+        save_info_in_file(identified_clients, "IDENTIFIED CLIENTS FROM DOC TEXT")
 
         return {"clients_identified": identified_clients}
     except Exception as e:
@@ -69,15 +69,15 @@ async def client_identifier(state: State) -> State:
 def client_verifier(state: State) -> State:
     """Verify identified clients against a predefined list."""
     logging.info("Verifying consolidated clients")
-    if not state.final_clients:
+    if not state.consolidated_clients:
         return state
     
     verified_clients = []
-    for client in state.final_clients:
+    for client in state.consolidated_clients:
         if verify_client(client.strip()):
             verified_clients.append(client)
 
-    save_state_to_file(verified_clients, "verified_clients.txt")
+    save_info_in_file(verified_clients,"VERIFIED CLIENTS BASED ON CUSTOM LIST")
     
     return {"verified_clients": verified_clients}
 
@@ -140,7 +140,7 @@ async def extract_clients(state: State) -> State:
             extracted_names.extend([item for item in cleaned_list if item])  
         
         clients_from_images = getCleanNames(extracted_names)
-        save_state_to_file(clients_from_images, "clients_Identified_image.txt")
+        save_info_in_file(clients_from_images, "CLIENTS FROM IMAGES USED IN DOCUMENT")
         
         return {"clients_from_images": clients_from_images}  
         
@@ -155,12 +155,12 @@ async def client_consolidator(state: State) -> State:
     client_from_images = state.clients_from_images
     clients_identified = state.clients_identified
 
-    sorted_list = list(set(client_from_images + clients_identified)) #sorted(combined_clients_set)
+    consolidated_clients = list(set(client_from_images + clients_identified)) #sorted(combined_clients_set)
     
-    final_clients_str = ", ".join(sorted_list)        
-    save_state_to_file(final_clients_str, "final_clients.txt")
+    consolidated_clients_str = ", ".join(consolidated_clients)        
+    save_info_in_file(consolidated_clients_str, "CONSOLIDATED CLIENTS")
 
-    return {"final_clients": sorted_list}
+    return {"consolidated_clients": consolidated_clients}
 
 
 async def email_sender(state: State) -> State:

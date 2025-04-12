@@ -7,3 +7,4 @@ src/__pycache__/*
 *.pyo
 # Ignore macOS system files
 .DS_Store
+logs/log.txt

@@ -66,8 +66,8 @@ def getCleanNames(extracted_names: str) -> List[str]:
     cleaned_names = sorted(set(all_names))
     return cleaned_names
 
-def save_state_to_file(state, filename="state_log.txt"):
-    """Save the state to a text file."""
+def save_info_in_file(info, infoType, filename="log.txt"):
+    """Save the information to a text file."""
     try:
         # Ensure the logs directory exists
         log_dir = "logs"
@@ -77,14 +77,14 @@ def save_state_to_file(state, filename="state_log.txt"):
         file_path = os.path.join(log_dir, filename)
         
         # Write the state to the file
-        with open(file_path, "w") as file:  # Open in append mode
-            file.write(f"\n\n{'*' * 30} Log {'*' * 30}\n")
-            file.write(f"{state}\n")  # Convert state to string
+        with open(file_path, "a") as file:  # Open in append mode
+            file.write(f"\n\n{'*' * 30} {infoType} {'*' * 30}\n")
+            file.write(f"{info}\n")  # Convert state to string
             file.write(f"{'*' * 70}\n")
         
-        logging.info(f"State saved to {file_path}")
+        logging.info(f"Saved the info in {file_path}")
     except Exception as e:
-        logging.error(f"Error saving state to file {filename}: {str(e)}", exc_info=True)
+        logging.error(f"Error saving info in file {filename}: {str(e)}", exc_info=True)
 
 def send_email_with_doc_attached(recipient_email: str, subject: str, body: str, doc_temp_path: str, file_name: str, email_from_alias: str = None) -> str:
     """Sends an email with the provided details and attaches the document in the email."""

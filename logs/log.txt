@@ -1,0 +1,30 @@
+
+
+****************************** IDENTIFIED CLIENTS FROM DOC TEXT ******************************
+['OpenAI', 'Amazon', 'Netflix', 'TikTok']
+**********************************************************************
+
+
+****************************** CONSOLIDATED CLIENTS ******************************
+OpenAI, TikTok, Netflix, Amazon
+**********************************************************************
+
+
+****************************** CLIENTS FROM IMAGES USED IN DOCUMENT ******************************
+['ADM', 'AIG', 'AT&T', 'AbbVie', 'Albertsons Companies', 'Allstate', 'Alphabet', 'Amazon', 'American Airlines', 'American Express', 'Bank of America', 'Best Buy', 'Boeing', 'Bristol Myers Squibb', 'Bunge', 'CHS', 'CNCora', 'CVS Health', 'Cardinal Health', 'Caterpillar', 'Centene', 'Charter Communications', 'Chevron', 'Cigna', 'Cisco', 'Citigroup', 'Comcast', 'Community Health Systems', 'ConocoPhillips', 'Costco Wholesale', 'Delta Air Lines', 'Dow', 'Elevance Health', 'Energy Transfer', 'Enterprise Products Partners', 'ExxonMobil', 'Fannie Mae', 'FedEx', 'Ford', 'Freddie Mac', 'General Electric', 'General Motors', 'Goldman Sachs', 'HCA Healthcare', 'HP Inc.', 'Hewlett Packard Enterprise', 'Home Depot', 'Humana', 'IBM', 'Intel', 'JPMorgan Chase & Co.', 'John Deere', 'Johnson & Johnson', 'Liberty Mutual Insurance', 'Lockheed Martin', "Lowe's", 'Marathon', 'Merck', 'MetLife', 'Meta', 'Microsoft', 'Morgan Stanley', 'Nationwide', 'Netflix', 'New York Life Insurance', 'PepsiCo', 'Performance Food Group', 'Pfizer', 'Phillips 66', 'Plains GP Holdings', 'Progressive', 'Prudential', 'Publix', 'Qualcomm', 'Raytheon Technologies', 'State Farm', 'StoneX', 'Sysco', 'TD SYNNEX', 'TJX', 'Target', 'Tesla', 'The Walt Disney Company', 'Thermo Fisher Scientific', 'TikTok', 'Tyson', 'UPS', 'United Airlines', 'United States Postal Service', 'UnitedHealth Group', 'Valero', 'Verizon', 'Walgreens Boots Alliance', 'Walmart', 'Wells Fargo', 'Wizard Pins', 'World Kinect']
+**********************************************************************
+
+
+****************************** CONSOLIDATED CLIENTS ******************************
+Elevance Health, AT&T, Alphabet, General Motors, HCA Healthcare, Pfizer, ConocoPhillips, American Airlines, World Kinect, Delta Air Lines, Valero, Home Depot, ExxonMobil, Allstate, UPS, Performance Food Group, OpenAI, Nationwide, MetLife, Goldman Sachs, Qualcomm, Wells Fargo, Phillips 66, The Walt Disney Company, StoneX, Netflix, Centene, Amazon, Lockheed Martin, United States Postal Service, Caterpillar, Thermo Fisher Scientific, John Deere, Liberty Mutual Insurance, Hewlett Packard Enterprise, Publix, Chevron, CHS, Target, Merck, Best Buy, Prudential, TikTok, Raytheon Technologies, Johnson & Johnson, Cardinal Health, Progressive, Meta, AbbVie, Intel, Walmart, Freddie Mac, American Express, CVS Health, IBM, Boeing, Dow, CNCora, Lowe's, Ford, Charter Communications, HP Inc., Microsoft, Marathon, Wizard Pins, ADM, Cisco, Walgreens Boots Alliance, Comcast, State Farm, Morgan Stanley, Bunge, Community Health Systems, Energy Transfer, Bristol Myers Squibb, Tesla, Enterprise Products Partners, Humana, TJX, Fannie Mae, Tyson, Albertsons Companies, Citigroup, Bank of America, Costco Wholesale, JPMorgan Chase & Co., PepsiCo, United Airlines, Plains GP Holdings, Sysco, AIG, Cigna, FedEx, General Electric, Verizon, TD SYNNEX, UnitedHealth Group, New York Life Insurance
+**********************************************************************
+
+
+****************************** VERIFIED CLIENTS BASED ON CUSTOM LIST ******************************
+['Amazon']
+**********************************************************************
+
+
+****************************** VERIFIED CLIENTS BASED ON CUSTOM LIST ******************************
+['Amazon', 'IBM', 'Microsoft']
+**********************************************************************
