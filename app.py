@@ -47,7 +47,6 @@ with st.sidebar:
     # recipient_email = st.text_input("Recipient Email", "tyagiamit08@gmail.com")
     email_from_alias = st.text_input("Email From Alias", "AI Agent")
     
-    
     #Generate workflow graph
     if st.button("Show Workflow Graph"):
         graph_path = visualize_graph()
@@ -63,31 +62,6 @@ col1, col2 = st.columns([3, 1])
 
 # Progress indicators in the right column
 with col2:
-    # st.header("Workflow Progress")
-    
-    # steps = [
-    #     "Document Upload",
-    #     "Document Processing",
-    #     "Client Identification",
-    #     "Client Verification",
-    #     "Document Summarization",
-    #     "Email Drafting",
-    #     "Email Sending"
-    # ]
-    
-    # # Display progress
-    # for i, step in enumerate(steps):
-    #     if st.session_state.current_step is None:
-    #         status = "⚪" if i > 0 else "🔵" if uploaded_file else "⚪"
-    #     elif i < steps.index(st.session_state.current_step):
-    #         status = "✅"
-    #     elif i == steps.index(st.session_state.current_step):
-    #         status = "🔵"
-    #     else:
-    #         status = "⚪"
-        
-    #     st.write(f"{status} {step}")
-    
     # Display graph visualization if available
     if st.session_state.graph_image:
         st.header("Workflow Graph")
@@ -98,8 +72,7 @@ with col2:
 
 # Main content area
 with col1:
-    # st.header("Results")
-    
+
     # if process_button and uploaded_file:
     if process_button and uploaded_file:
         # Save uploaded file to temp directory
@@ -115,12 +88,6 @@ with col1:
             # Update progress without restarting
             st.session_state.current_step = "Document Processing"
 
-            # Create the workflow graph and update session state
-            # graph_path = visualize_graph()
-            # if os.path.exists(graph_path):
-            #     st.session_state.graph_image = graph_path
-            #     logging.info(f"Workflow graph generated and saved at: {graph_path}")
-
             # Continue with the workflow execution
             workflow_graph = create_workflow_graph(temp_file_path,file_name)
             logging.info("Workflow graph created successfully")
@@ -128,13 +95,12 @@ with col1:
             # Create initial state
             initial_state = State(
                 document_content="",
-                clients=[],
+                clients_identified=[],
                 verified_clients=[],
-                summary="",
                 email_sent=False,
                 email_from_alias=email_from_alias,
                 images=[],
-                client_names=[]
+                clients_from_images=[]
             )
             
             # Compile the graph
@@ -160,7 +126,7 @@ with col1:
                 st.session_state.results = {
                     "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
                     "clients_identified": final_state["clients_identified"],
-                    "client_names": final_state["client_names"],
+                    "clients_from_images": final_state["clients_from_images"],
                     "verified_clients": final_state["verified_clients"],
                     "email_sent": final_state["email_sent"]
                 }
@@ -199,18 +165,6 @@ with col1:
                     
                 #     #  # Simulate a loader for better UI experience
                    
-                #     if event_name == "email_sender":
-                #         print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
-                #         final_state = event["email_sender"]
-                #         st.session_state.results = {
-                #             "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
-                #             "clients": final_state["clients"],
-                #             "client_names": final_state["client_names"],
-                #             "verified_clients": final_state["verified_clients"],
-                #             "email_sent": final_state["email_sent"]
-                #         }
-                #         st.session_state.processing_complete = True
-
                 #         progress_bar.progress(100)
                 #         loader_placeholder.empty()
 
@@ -228,6 +182,9 @@ with col1:
     if st.session_state.processing_complete and st.session_state.results:
         results = st.session_state.results
         
+        if results["email_sent"]:
+            st.success("Email sent successfully!")
+
         with st.expander("Document Content (Preview)", expanded=False):
             st.text_area("Content", results["document_content"], height=200)
         
@@ -237,14 +194,12 @@ with col1:
                     st.write(f"- {client}")
         
         with st.expander("Identified Clients Based on Images", expanded=True):
-            if results["client_names"]:
-                for i, client in enumerate(results["client_names"]):
+            if results["clients_from_images"]:
+                for i, client in enumerate(results["clients_from_images"]):
                     st.write(f"- {client}")
 
         with st.expander("Verified Clients", expanded=True):
             for client in results["verified_clients"]:
                 st.write(f"- {client}")
         
-        if results["email_sent"]:
-            st.success("Email sent successfully!")
 

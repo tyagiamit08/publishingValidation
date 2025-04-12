@@ -58,10 +58,10 @@ async def client_identifier(state: State) -> State:
             clients_identification_agent,
             state.document_content
         )
-        client_names = [client.name for client in result.final_output.clients]
-        save_state_to_file(client_names, "clients_Identified.txt")
+        identified_clients = [client.name for client in result.final_output.clients]
+        save_state_to_file(identified_clients, "clients_Identified.txt")
 
-        return {"clients_identified": client_names}
+        return {"clients_identified": identified_clients}
     except Exception as e:
         logging.error(f"Error in client identification: {str(e)}", exc_info=True)
         return state
@@ -81,7 +81,7 @@ def client_verifier(state: State) -> State:
     
     return {"verified_clients": verified_clients}
 
-async def extract_images_node(state: State) -> State:
+async def extract_images(state: State) -> State:
     file_name = state.document_name.lower()
     file_bytes = state.document_bytes
     
@@ -94,7 +94,7 @@ async def extract_images_node(state: State) -> State:
     
     return {"images": images}   
 
-async def extract_client_names_node(state: State) -> State:
+async def extract_clients(state: State) -> State:
     """Extract client names from the images."""
     try:
         if not state.images:
@@ -139,10 +139,10 @@ async def extract_client_names_node(state: State) -> State:
             cleaned_list = re.split(r'\n-?\s*', response.choices[0].message.content.strip())  # handles both "\n" and "\n- " styles
             extracted_names.extend([item for item in cleaned_list if item])  
         
-        cleaned_names = getCleanNames(extracted_names)
-        save_state_to_file(cleaned_names, "clients_Identified_image.txt")
+        clients_from_images = getCleanNames(extracted_names)
+        save_state_to_file(clients_from_images, "clients_Identified_image.txt")
         
-        return {"client_names": cleaned_names}  
+        return {"clients_from_images": clients_from_images}  
         
     except Exception as e:
         logging.error(f"Error in client names extraction: {str(e)}", exc_info=True)
@@ -152,10 +152,10 @@ async def client_consolidator(state: State) -> State:
     """
     Combine two lists of client names, remove duplicates, and sort them.
     """
-    client_names_from_images = state.client_names
+    client_from_images = state.clients_from_images
     clients_identified = state.clients_identified
 
-    sorted_list = list(set(client_names_from_images + clients_identified)) #sorted(combined_clients_set)
+    sorted_list = list(set(client_from_images + clients_identified)) #sorted(combined_clients_set)
     
     final_clients_str = ", ".join(sorted_list)        
     save_state_to_file(final_clients_str, "final_clients.txt")
@@ -163,8 +163,8 @@ async def client_consolidator(state: State) -> State:
     return {"final_clients": sorted_list}
 
 
-async def email_sender_with_doc_attached(state: State) -> State:
-    """Send the email with the summary attached."""
+async def email_sender(state: State) -> State:
+    """Send the email with the document attached."""
 
     email_sent = False  # Track if any email was successfully sent
 

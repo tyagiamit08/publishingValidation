@@ -12,10 +12,10 @@ from src.nodes import (
     client_identifier,
     client_verifier,
     client_consolidator,
-    extract_images_node,
-    extract_client_names_node,
+    extract_images,
+    extract_clients,
     document_processor,
-    email_sender_with_doc_attached
+    email_sender
 )
 from IPython.display import Image, display
 import re
@@ -32,11 +32,11 @@ def create_workflow_graph(document_path: str, file_name: str):
     # Define nodes
     workflow.add_node("document_processor", lambda state: asyncio.run(document_processor(state, document_path, file_name)))
     workflow.add_node("client_identifier", client_identifier)
-    workflow.add_node("extract_images", extract_images_node)
-    workflow.add_node("extract_clients", extract_client_names_node)
+    workflow.add_node("extract_images", extract_images)
+    workflow.add_node("extract_clients", extract_clients)
     workflow.add_node("client_consolidator", client_consolidator)
     workflow.add_node("client_verifier", client_verifier)
-    workflow.add_node("email_sender", email_sender_with_doc_attached)
+    workflow.add_node("email_sender", email_sender)
     
     # Define a sequential workflow instead of branching
     workflow.add_edge(START, "document_processor")

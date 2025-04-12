@@ -14,10 +14,9 @@ class State(BaseModel):
     document_name: str = ""
     clients_identified: List[str]=[]
     verified_clients: List[str]=[]
-    summary: str = ""
     email_sent: Optional[bool] = False
     email_from_alias: str = ""
     images: list = []
-    client_names: List[str]=[]
+    clients_from_images: List[str]=[]
     document_bytes: bytes = b""
     final_clients: List[str]=[]
