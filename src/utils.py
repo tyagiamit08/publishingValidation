@@ -6,11 +6,11 @@ from typing import List, Dict
 import smtplib
 import json
 from email.message import EmailMessage
+from config import VALID_CLIENTS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-VALID_CLIENTS = ["Neste", "IBM", "IKEA", "Microsoft", "Unilever","Amazon"]
 
 def verify_client(client_name: str) -> bool:
     """Checks if a client is valid based on a predefined list."""
@@ -66,8 +66,6 @@ def getCleanNames(extracted_names: str) -> List[str]:
     cleaned_names = sorted(set(all_names))
     return cleaned_names
 
-
-
 def save_state_to_file(state, filename="state_log.txt"):
     """Save the state to a text file."""
     try:
@@ -80,7 +78,7 @@ def save_state_to_file(state, filename="state_log.txt"):
         
         # Write the state to the file
         with open(file_path, "w") as file:  # Open in append mode
-            file.write(f"\n\n{'*' * 30} State Log {'*' * 30}\n")
+            file.write(f"\n\n{'*' * 30} Log {'*' * 30}\n")
             file.write(f"{state}\n")  # Convert state to string
             file.write(f"{'*' * 70}\n")
         
@@ -91,9 +89,6 @@ def save_state_to_file(state, filename="state_log.txt"):
 def send_email_with_doc_attached(recipient_email: str, subject: str, body: str, doc_temp_path: str, file_name: str, email_from_alias: str = None) -> str:
     """Sends an email with the provided details and attaches the document in the email."""
     try:
-        # Log the email details
-        logging.info(f"Attempting to send email to: {recipient_email}")
-
         # Create the email
         msg = EmailMessage()
         msg["Subject"] = subject
@@ -118,7 +113,7 @@ def send_email_with_doc_attached(recipient_email: str, subject: str, body: str, 
         logging.error(f"Error sending email: {str(e)}", exc_info=True)
         return f"Error sending email: {str(e)}"
 
-def read_email_template():
+def get_email_template():
     """
     Read the email body from the email_template.json file.
     

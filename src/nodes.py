@@ -11,7 +11,7 @@ from src.utils import (
     save_state_to_file,
     get_assistants_for_client,
     send_email_with_doc_attached,
-    read_email_template
+    get_email_template
     )
 from src.document_processor import extract_images_from_pdf, extract_images_from_docx
 from agents import Runner
@@ -207,11 +207,11 @@ async def email_sender_with_doc_attached(state: State) -> State:
                 print(f"Assistants for {client}:")
                 for assistant in assistants:
                     print(f"- Name: {assistant['name']}, Email: {assistant['email']}")
-                    subject, body= read_email_template()
+                    subject, body= get_email_template()
                     formatted_subject = subject.replace("[client_name]", client)
                     formatted_body = body.replace("[recipient_name]", assistant['name'])
 
-                    logging.info(f"---------------Sending email to {assistant['name']} ---------------")
+                    logging.info(f"---------------Sending email to {assistant['name']} ({assistant['email']})---------------")
 
                     result = send_email_with_doc_attached(assistant['email'],
                                                            formatted_subject,

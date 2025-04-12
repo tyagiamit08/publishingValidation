@@ -127,14 +127,11 @@ with col1:
             
             # Create initial state
             initial_state = State(
-                # document_path=temp_file_path,
                 document_content="",
                 clients=[],
                 verified_clients=[],
                 summary="",
-                email_details=None,
                 email_sent=False,
-                # recipient_email=recipient_email,
                 email_from_alias=email_from_alias,
                 images=[],
                 client_names=[]
@@ -210,7 +207,6 @@ with col1:
                 #             "clients": final_state["clients"],
                 #             "client_names": final_state["client_names"],
                 #             "verified_clients": final_state["verified_clients"],
-                #             "email_details": "", #final_state["email_details"],
                 #             "email_sent": final_state["email_sent"]
                 #         }
                 #         st.session_state.processing_complete = True
