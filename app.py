@@ -159,7 +159,7 @@ with col1:
                 
                 st.session_state.results = {
                     "document_content": final_state["document_content"][:1000] + "..." if len(final_state["document_content"]) > 1000 else final_state["document_content"],
-                    "clients": final_state["clients"],
+                    "clients_identified": final_state["clients_identified"],
                     "client_names": final_state["client_names"],
                     "verified_clients": final_state["verified_clients"],
                     "email_sent": final_state["email_sent"]
@@ -232,8 +232,8 @@ with col1:
             st.text_area("Content", results["document_content"], height=200)
         
         with st.expander("Identified Clients Based on Text", expanded=True):
-            if results["clients"]:
-                for i, client in enumerate(results["clients"]):
+            if results["clients_identified"]:
+                for i, client in enumerate(results["clients_identified"]):
                     st.write(f"- {client}")
         
         with st.expander("Identified Clients Based on Images", expanded=True):

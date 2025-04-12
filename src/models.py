@@ -12,7 +12,7 @@ class State(BaseModel):
     document_content:  str = ""
     document_path: str = ""
     document_name: str = ""
-    clients: List[str]=[]
+    clients_identified: List[str]=[]
     verified_clients: List[str]=[]
     summary: str = ""
     email_sent: Optional[bool] = False

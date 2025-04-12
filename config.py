@@ -18,5 +18,6 @@ SMTP_PORT = os.getenv("SMTP_PORT", "465")
 # Agent models
 DOC_PROCESSING_MODEL = "gpt-3.5-turbo"
 CLIENT_IDENTIFICATION_MODEL = "o1"
+TEXT_TO_IMAGE_IDENTIFICATION_MODEL="gpt-4-turbo"
 
 VALID_CLIENTS = ["Neste", "IBM", "IKEA", "Microsoft", "Unilever","Amazon"]

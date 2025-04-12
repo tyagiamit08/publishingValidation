@@ -14,6 +14,7 @@ from src.utils import (
     get_email_template
     )
 from src.document_processor import extract_images_from_pdf, extract_images_from_docx
+from config import TEXT_TO_IMAGE_IDENTIFICATION_MODEL
 from agents import Runner
 from openai import OpenAI
 import re
@@ -39,13 +40,6 @@ async def document_processor(state: State,document_path:str,file_name:str) -> St
 
         document_content = result.final_output 
         
-        # Use the proper state update pattern
-        state_dict = state.model_dump()
-        state_dict["document_content"] = document_content
-        state_dict["document_path"] = document_path
-        state_dict["document_name"] = file_name
-        state_dict["document_bytes"] = file_bytes
-        # return State(**state_dict)
         return{"document_content": document_content,
                 "document_path": document_path,
                 "document_name": file_name,
@@ -58,7 +52,7 @@ async def document_processor(state: State,document_path:str,file_name:str) -> St
 async def client_identifier(state: State) -> State:
     """Identify clients in the document content."""
     try:
-        logging.info("Identifying clients in document")
+        logging.info("Identifying clients in document based on text")
 
         result = await Runner.run(
             clients_identification_agent,
@@ -67,41 +61,30 @@ async def client_identifier(state: State) -> State:
         client_names = [client.name for client in result.final_output.clients]
         save_state_to_file(client_names, "clients_Identified.txt")
 
-        # Use the proper state update pattern
-        # state_dict = state.model_dump()
-        # state_dict["clients"] = client_names
-        # return State(**state_dict)
-        return {"clients": client_names}
+        return {"clients_identified": client_names}
     except Exception as e:
         logging.error(f"Error in client identification: {str(e)}", exc_info=True)
         return state
 
 def client_verifier(state: State) -> State:
     """Verify identified clients against a predefined list."""
-    logging.info("Verifying identified clients")
+    logging.info("Verifying consolidated clients")
     if not state.final_clients:
         return state
     
     verified_clients = []
-    # No need to split since final_clients is now a list
     for client in state.final_clients:
         if verify_client(client.strip()):
             verified_clients.append(client)
 
     save_state_to_file(verified_clients, "verified_clients.txt")
     
-    # Create a new state with the verified_clients field updated
-    # state_dict = state.model_dump()
-    # state_dict["verified_clients"] = verified_clients
-    # return State(**state_dict)
     return {"verified_clients": verified_clients}
 
 async def extract_images_node(state: State) -> State:
     file_name = state.document_name.lower()
     file_bytes = state.document_bytes
     
-    print ("FileName---->",file_name)
-
     if file_name.endswith(".pdf"):
         images = extract_images_from_pdf(file_bytes)
     elif file_name.endswith(".docx"):
@@ -109,10 +92,6 @@ async def extract_images_node(state: State) -> State:
     else:
         raise ValueError("Unsupported file type. Only .pdf and .docx are supported.")
     
-    # Use the proper state update pattern
-    # state_dict = state.model_dump()
-    # state_dict["images"] = images
-    # return State(**state_dict)
     return {"images": images}   
 
 async def extract_client_names_node(state: State) -> State:
@@ -122,7 +101,7 @@ async def extract_client_names_node(state: State) -> State:
             logging.info("Image not found in the uploaded document.")
             return state
         
-        logging.info("Extracting Client Names")
+        logging.info("Extracting Client Names from document images")
 
         images = state.images
         extracted_names = []
@@ -131,7 +110,7 @@ async def extract_client_names_node(state: State) -> State:
             img_b64 = base64.b64encode(img_bytes).decode()
 
             response = client.chat.completions.create(
-                model="gpt-4-turbo",
+                model=TEXT_TO_IMAGE_IDENTIFICATION_MODEL,
                 messages=[
                     {
                         "role": "user",
@@ -163,10 +142,6 @@ async def extract_client_names_node(state: State) -> State:
         cleaned_names = getCleanNames(extracted_names)
         save_state_to_file(cleaned_names, "clients_Identified_image.txt")
         
-        # Use the proper state update pattern
-        # state_dict = state.model_dump()
-        # state_dict["client_names"] = cleaned_names
-        # return State(**state_dict)
         return {"client_names": cleaned_names}  
         
     except Exception as e:
@@ -177,27 +152,20 @@ async def client_consolidator(state: State) -> State:
     """
     Combine two lists of client names, remove duplicates, and sort them.
     """
-    # combined_clients_set = set(state.client_names + state.clients)
+    client_names_from_images = state.client_names
+    clients_identified = state.clients_identified
 
-    client_names = state.client_names
-    clients = state.clients
-
-    sorted_list = list(set(client_names + clients)) #sorted(combined_clients_set)
+    sorted_list = list(set(client_names_from_images + clients_identified)) #sorted(combined_clients_set)
     
     final_clients_str = ", ".join(sorted_list)        
     save_state_to_file(final_clients_str, "final_clients.txt")
-    
-    # state_dict = state.model_dump()
-    # state_dict["final_clients"] = sorted_list
-    # return State(**state_dict)
+
     return {"final_clients": sorted_list}
 
 
 async def email_sender_with_doc_attached(state: State) -> State:
     """Send the email with the summary attached."""
 
-    print(f"\n\nExecuting --------email_sender_with_doc_attached\n\n" )
-    
     email_sent = False  # Track if any email was successfully sent
 
     try:
@@ -227,12 +195,6 @@ async def email_sender_with_doc_attached(state: State) -> State:
                 print(f"No assistants found for client: {client}")
                 logging.info(f"No assistants found for client: {client}")
         
-        # Create a new state with only the email_sent field updated
-        # This avoids touching the verified_clients field
-        # state_dict = state.model_dump()
-        # state_dict["email_sent"] = email_sent
-        # return State(**state_dict)
-
         return {
             "email_sent": email_sent
         }
