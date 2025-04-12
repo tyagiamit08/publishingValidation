@@ -11,6 +11,7 @@ from src.agents import (
     send_email_with_doc_attached_agent
 )
 from src.tools import send_email_with_doc_attached
+from src.utils import read_email_template
 import networkx as nx
 import matplotlib.pyplot as plt
 import base64
@@ -51,19 +52,18 @@ async def email_sender_with_doc_attached(state: State) -> State:
                 print(f"Assistants for {client}:")
                 for assistant in assistants:
                     print(f"- Name: {assistant['name']}, Email: {assistant['email']}")
+                    subject, body= read_email_template()
+                    formatted_subject = subject.replace("[client_name]", client)
+                    formatted_body = body.replace("[recipient_name]", assistant['name'])
 
-                    email_input = {
-                        "recipient_name": assistant['name'],
-                        "recipient_email": assistant['email'],
-                        "subject": f"Review Document : {client}", # Fixed the f-string
-                        "body": "TESTING", 
-                        "email_from_alias": state.email_from_alias,
-                        "file_path":state.document_path,
-                        "file_name":state.document_name
-                    }
-                    logging.info(f"---------------Sending email to {email_input['recipient_name']} ---------------")
+                    logging.info(f"---------------Sending email to {assistant['name']} ---------------")
 
-                    result = send_email_with_doc_attached(email_input['recipient_email'], email_input['subject'], email_input['body'], state.document_path, state.document_name, email_input['email_from_alias'])
+                    result = send_email_with_doc_attached(assistant['email'],
+                                                           formatted_subject,
+                                                           formatted_body,
+                                                            state.document_path,
+                                                            state.document_name,
+                                                            state.email_from_alias)
                     
                     if "successfully" in result.lower():
                         email_sent = True

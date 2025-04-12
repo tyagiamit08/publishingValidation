@@ -109,3 +109,27 @@ def save_state_to_file(state, filename="state_log.txt"):
         logging.info(f"State saved to {file_path}")
     except Exception as e:
         logging.error(f"Error saving state to file {filename}: {str(e)}", exc_info=True)
+
+def read_email_template():
+    """
+    Read the email body from the email_template.json file.
+    
+    Returns:
+        str: The email body, subject
+    """
+    try:
+        # Get the path to the email_template.json file
+        template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'email_template.json')
+        
+        # Open and parse the JSON file
+        with open(template_path, 'r') as file:
+            template_data = json.load(file)
+        
+        # Extract the body content
+        body = template_data.get('email_content', {}).get('body', '')
+        subject = template_data.get('email_content', {}).get('subject', '')
+        
+        return subject,body
+    except Exception as e:
+        print(f"Error reading email template: {str(e)}")
+        return "Review Document","Dear [Recipient],\n\nPlease review the attached document.\n\nBest regards,"

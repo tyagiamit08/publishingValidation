@@ -1,6 +1,7 @@
 {
     "email_content": 
         {
-            "body":"Dear [Recipient] \n\n\n\n Kindly review the document and share your feedback or let us know if any further clarification is needed. \n\n Best Regards"
+            "subject":"Document Review Request - [client_name]",
+            "body":"Dear [recipient_name],\n\nKindly review the attached document and share your feedback at your convenience.\nPlease let us know if any further clarification is needed.\n\nBest regards,\nTeam DCS"
         }
 }
