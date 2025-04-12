@@ -8,9 +8,7 @@ from agents import (
 )
 from config import (
     DOC_PROCESSING_MODEL,
-    CLIENT_IDENTIFICATION_MODEL,
-    SUMMARIZATION_MODEL,
-    EMAIL_DRAFTING_MODEL,
+    CLIENT_IDENTIFICATION_MODEL
 )
 import smtplib
 from email.message import EmailMessage
@@ -52,25 +50,6 @@ Guidelines for Extraction:
  - Consider variations of client names (e.g., "ABC Corp." vs. "ABC Corporation").
 Format the extracted information clearly and concisely for downstream processing."""
 
-DOC_SUMMARIZATION_INSTRUCTION="""You are a summarization expert. 
-You need to analyze and then generate a detailed yet concise summary that captures all key points from the provided document, 
-main ideas, and critical details. Structure the summary for clarity and readability, 
-highlighting important sections such as conclusions, recommendations, or action items. 
-Include relevant metadata (e.g., title, author, date) if available. 
-Ensure the summary preserves the context and tone of the document while avoiding unnecessary repetition or irrelevant details."""
-
-DRAFT_EMAIL_INSTRUCTIONS="""
-        You are an expert email drafting agent. Your task is to create a professional and concise email.
-        The email should include:
-        - A clear and concise subject line based on the provided content.
-        - A well-structured body that includes:
-            - A greeting: "Dear [recipient_name]"
-            - A brief introduction providing context about the attachment (e.g., "Please find attached the document on the key points").
-            - A polite request for feedback or action (e.g., "Kindly review the document and share your feedback or let us know if further clarification is needed.").
-            - A closing statement: "Best Regards."
-        Ensure the tone is professional, polite, and appropriate for the recipient.
-    """
-
 # Define agents
 doc_processing_agent = Agent(
     name="Document Processing Agent",
@@ -85,20 +64,6 @@ clients_identification_agent = Agent(
     instructions=CLIENT_IDENTIFICATION_INSTRUCTION,
     model=CLIENT_IDENTIFICATION_MODEL,
     output_type=ClientIdentificationResult,
-)
-
-summarization_agent = Agent(
-    name="Document Summarization Agent",
-    instructions=DOC_SUMMARIZATION_INSTRUCTION,
-    model=SUMMARIZATION_MODEL,
-    output_type=str,    
-)
-
-draft_email_agent = Agent(
-    name="Email Drafting Agent",
-    instructions=DRAFT_EMAIL_INSTRUCTIONS,
-    model=EMAIL_DRAFTING_MODEL,
-    output_type=EmailDetail,
 )
 
 send_email_with_doc_attached_agent = Agent(
