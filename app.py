@@ -111,16 +111,40 @@ with col1:
 
             async def run_workflow():
                 # Run the workflow asynchronously
-
-                progress_bar = st.progress(0)  # Initialize a progress bar
-                total_steps = 7  # Total number of steps in the workflow
-                current_step_index = 1
-
-                loader_placeholder = st.empty()  # This will hold the loader message
-                loader_placeholder.text("Processing... Please wait.")
-
-
+                
+                # Create a progress bar
+                progress_bar = st.progress(0)
+                status_text = st.empty()  # For showing current stage
+                
+                # Define workflow stages
+                stages = [
+                    "Document Processing",
+                    "Client Identification from Text",
+                    "Image Extraction",
+                    "Client Identification from Images",
+                    "Client Consolidation",
+                    "Client Verification",
+                    "Email Preparation and Sending"
+                ]
+                total_stages = len(stages)
+                
+                # Mock progress updates (since we don't have real-time tracking in the workflow)
+                for i, stage in enumerate(stages):
+                    # Update progress bar
+                    progress = int((i) / total_stages * 100)
+                    progress_bar.progress(progress)
+                    status_text.info(f"Stage {i+1}/{total_stages}: {stage}")
+                    
+                    # Wait a bit before starting the next stage (simulates processing time)
+                    if i < total_stages - 1:  # Don't sleep after the last stage
+                        await asyncio.sleep(3)
+                
+                # Actually run the workflow
                 final_state = await graph_app.ainvoke(initial_state)
+                
+                # Complete the progress bar
+                progress_bar.progress(100)
+                status_text.success("Workflow completed successfully!")
                 print(f"\n\n!!!!!!!!!!!!!!!!!!Workflow completed successfully. !!!!!!!!!!!!!!!!!!\n\n")
                 
                 st.session_state.results = {
@@ -132,42 +156,6 @@ with col1:
                 }
                 st.session_state.processing_complete = True
                 
-                # async for event in graph_app.astream(initial_state):
-                #     # logging.info(f"Event received: {event}")
-
-                #     event_name = list(event.keys())[0] 
-
-                #     # Map the event name to a human-readable step name
-                #     step_mapping = {
-                #         "document_processor": "Document Processing",
-                #         "client_identifier": "Client Identification",
-                #         "client_verifier": "Client Verification",
-                #         "document_summarizer": "Document Summarization",
-                #         "email_drafter": "Email Drafting",
-                #         "email_sender": "Email Sending"
-                #     }
-
-                #     # if event_name in step_mapping:
-                #     #     st.session_state.current_step = step_mapping[event_name]
-                #     #     # initial_state.current_state = event_name  # Update the current_state field in the state
-                #     #     # Update the progress bar
-                #     #     current_step_index += 1
-                #     #     progress_bar.progress(int((current_step_index / total_steps) * 100))
-
-                #     #     loader_placeholder.info(f"Completed {st.session_state.current_step}...")
-
-                #     # time.sleep(2)
-
-                #     # # Display the event details and current step on the UI
-                #     # # with col1:
-                #     # #     st.write(f"### Event : {step_mapping[event_name]}")
-                #     # #     st.json(event)
-                    
-                #     #  # Simulate a loader for better UI experience
-                   
-                #         progress_bar.progress(100)
-                #         loader_placeholder.empty()
-
             asyncio.run(run_workflow())
             
         except Exception as e:
@@ -201,5 +189,5 @@ with col1:
         with st.expander("Verified Clients", expanded=True):
             for client in results["verified_clients"]:
                 st.write(f"- {client}")
-        
+
 
