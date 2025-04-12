@@ -3,8 +3,6 @@ import logging
 import asyncio
 from langgraph.graph import StateGraph, START, END
 from src.models import State, ClientIdentificationResult, EmailDetail,ClientInfo
-from src.utils import send_email_with_doc_attached
-from src.utils import read_email_template
 import networkx as nx
 import matplotlib.pyplot as plt
 import base64
@@ -16,9 +14,9 @@ from src.nodes import (
     client_consolidator,
     extract_images_node,
     extract_client_names_node,
-    document_processor
+    document_processor,
+    email_sender_with_doc_attached
 )
-from src.utils import verify_client, get_assistants_for_client,getCleanNames,save_state_to_file
 from src.document_processor import extract_images_from_pdf, extract_images_from_docx
 from agents import Runner
 from IPython.display import Image, display
@@ -29,55 +27,6 @@ import ast
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-async def email_sender_with_doc_attached(state: State) -> State:
-    """Send the email with the summary attached."""
-
-    print(f"\n\nExecuting --------email_sender_with_doc_attached\n\n" )
-    # if not state.email_details:
-    #     return state
-    
-    email_sent = False  # Track if any email was successfully sent
-
-    try:
-        for client in state.verified_clients:
-            assistants= get_assistants_for_client(client)
-            if assistants:
-                print(f"Assistants for {client}:")
-                for assistant in assistants:
-                    print(f"- Name: {assistant['name']}, Email: {assistant['email']}")
-                    subject, body= read_email_template()
-                    formatted_subject = subject.replace("[client_name]", client)
-                    formatted_body = body.replace("[recipient_name]", assistant['name'])
-
-                    logging.info(f"---------------Sending email to {assistant['name']} ---------------")
-
-                    result = send_email_with_doc_attached(assistant['email'],
-                                                           formatted_subject,
-                                                           formatted_body,
-                                                            state.document_path,
-                                                            state.document_name,
-                                                            state.email_from_alias)
-                    
-                    if "successfully" in result.lower():
-                        email_sent = True
-                    
-            else:
-                print(f"No assistants found for client: {client}")
-                logging.info(f"No assistants found for client: {client}")
-        
-        # Create a new state with only the email_sent field updated
-        # This avoids touching the verified_clients field
-        # state_dict = state.model_dump()
-        # state_dict["email_sent"] = email_sent
-        # return State(**state_dict)
-
-        return {
-            "email_sent": email_sent
-        }
-            
-    except Exception as e:
-        logging.error(f"Error in email sending: {str(e)}", exc_info=True)
-        return state
 
 
 def create_workflow_graph(document_path: str, file_name: str):
@@ -98,7 +47,6 @@ def create_workflow_graph(document_path: str, file_name: str):
     workflow.add_edge(START, "document_processor")
     workflow.add_edge("document_processor", "client_identifier")
     workflow.add_edge("document_processor", "extract_images")
-    # workflow.add_edge("client_identifier", "extract_images")
     workflow.add_edge("extract_images", "extract_clients")
     workflow.add_edge("client_identifier", "client_consolidator")
     workflow.add_edge("extract_clients", "client_consolidator")

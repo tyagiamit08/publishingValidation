@@ -5,7 +5,14 @@ from src.agents import (
     clients_identification_agent,
 )
 import base64
-from src.utils import verify_client,getCleanNames,save_state_to_file
+from src.utils import (
+    verify_client,
+    getCleanNames,
+    save_state_to_file,
+    get_assistants_for_client,
+    send_email_with_doc_attached,
+    read_email_template
+    )
 from src.document_processor import extract_images_from_pdf, extract_images_from_docx
 from agents import Runner
 from openai import OpenAI
@@ -184,3 +191,54 @@ async def client_consolidator(state: State) -> State:
     # state_dict["final_clients"] = sorted_list
     # return State(**state_dict)
     return {"final_clients": sorted_list}
+
+
+async def email_sender_with_doc_attached(state: State) -> State:
+    """Send the email with the summary attached."""
+
+    print(f"\n\nExecuting --------email_sender_with_doc_attached\n\n" )
+    # if not state.email_details:
+    #     return state
+    
+    email_sent = False  # Track if any email was successfully sent
+
+    try:
+        for client in state.verified_clients:
+            assistants= get_assistants_for_client(client)
+            if assistants:
+                print(f"Assistants for {client}:")
+                for assistant in assistants:
+                    print(f"- Name: {assistant['name']}, Email: {assistant['email']}")
+                    subject, body= read_email_template()
+                    formatted_subject = subject.replace("[client_name]", client)
+                    formatted_body = body.replace("[recipient_name]", assistant['name'])
+
+                    logging.info(f"---------------Sending email to {assistant['name']} ---------------")
+
+                    result = send_email_with_doc_attached(assistant['email'],
+                                                           formatted_subject,
+                                                           formatted_body,
+                                                            state.document_path,
+                                                            state.document_name,
+                                                            state.email_from_alias)
+                    
+                    if "successfully" in result.lower():
+                        email_sent = True
+                    
+            else:
+                print(f"No assistants found for client: {client}")
+                logging.info(f"No assistants found for client: {client}")
+        
+        # Create a new state with only the email_sent field updated
+        # This avoids touching the verified_clients field
+        # state_dict = state.model_dump()
+        # state_dict["email_sent"] = email_sent
+        # return State(**state_dict)
+
+        return {
+            "email_sent": email_sent
+        }
+            
+    except Exception as e:
+        logging.error(f"Error in email sending: {str(e)}", exc_info=True)
+        return state
