@@ -1,7 +1,7 @@
 
 import logging
 from agents import (
-    function_tool,
+    function_tool
 )
 import os
 from dotenv import load_dotenv

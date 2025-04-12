@@ -197,8 +197,6 @@ async def email_sender_with_doc_attached(state: State) -> State:
     """Send the email with the summary attached."""
 
     print(f"\n\nExecuting --------email_sender_with_doc_attached\n\n" )
-    # if not state.email_details:
-    #     return state
     
     email_sent = False  # Track if any email was successfully sent
 
