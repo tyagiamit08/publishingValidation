@@ -23,7 +23,6 @@ The workflow is visualized through an interactive graph that shows the processin
 1. Clone the repository:
    ```bash
    git clone https://github.com/your-username/publishingValidation.git
-   cd publishingValidation
    ```
 
 2. Set up a virtual environment:

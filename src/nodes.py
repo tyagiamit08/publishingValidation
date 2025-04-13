@@ -99,7 +99,6 @@ async def extract_clients(state: State) -> State:
     try:
         if not state.images:
             logging.info("Image not found in the uploaded document.")
-            return state
         
         logging.info("Extracting Client Names from document images")
 
